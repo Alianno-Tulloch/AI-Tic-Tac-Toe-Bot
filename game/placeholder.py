@@ -1,6 +1,6 @@
 # Alianno - i'm just gonna put placeholder code here,
 # stuff i need implemented by whoever is working on the game
-
+#Ashvinan: added evlauate and print_board placeholders
 class Game:
     '''
     In order to work, MiniMax (and the other algorithms) need to be able to see certain things
@@ -54,3 +54,12 @@ class Game:
     def is_win(self, player):
         # Return True if player has won
         pass
+
+    def evaluate(self,player):
+        #heuristic function that evaluates non-terminal states
+        pass
+
+    def print_board(self):
+        # Print or display the board
+        pass
+    
