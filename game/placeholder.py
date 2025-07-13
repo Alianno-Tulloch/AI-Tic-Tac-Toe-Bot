@@ -3,6 +3,21 @@
 #Ashvinan: added evlauate and print_board placeholders
 class Game:
     '''
+    Requirements:
+        The game needs to be able to be played by
+            - Human vs Algorithm
+            - AI (Google Gemini) vs Algorithm
+        
+        The Game must:
+            - Be Scalable (So for Tic Tac Toe, that means the grid can be dynamically chosen)
+                - I.E., 3x3 grid, 5x5 grid, 7x7 grid, etc
+            - Track AI and Algorithm performance metrics
+                - Execution Time: Compare runtimes of Minimax and Alpha-Beta Pruning.
+                - Node Evaluations: Count the number of nodes evaluated in the game tree.
+                - Success Rate: Assess Algorithm win rates compared to Gemini API agents.
+
+
+
     In order to work, MiniMax (and the other algorithms) need to be able to see certain things
             - A way to get the currently available moves (e.g., open columns in Connect Four),
                 so the algorithm knows which branches to explore.
