@@ -50,31 +50,57 @@ class Game:
             - a parameter that tells the algorithm when the is over, and who won
             - 
     '''
-    def __init__(self, board, active_player):
-        self.board = board
+
+    def __init__(self, board_size=3, board=None, active_player="X"):
+        self.board_size = board_size
         self.active_player = active_player
+        if board:
+            self.board = [row[:] for row in board]  # Deep copy
+        else:
+            self.board = [[" " for _ in range(board_size)] for _ in range(board_size)]
 
     def get_available_moves(self):
-        # Return list of column indices you can still play
-        pass
+        return [(r, c) for r in range(self.board_size) for c in range(self.board_size) if self.board[r][c] == " "]
 
+    # Pass move as a tuple of (row, column)
     def apply_move(self, move):
-        # Return a **new Game object** with the move applied
-        pass
+        r, c = move
+        if self.board[r][c] != " ":
+            return "Invalid move"
+
+        new_board = [row[:] for row in self.board]
+        new_board[r][c] = self.active_player
+        next_player = "O" if self.active_player == "X" else "X"
+        return Game(self.board_size, new_board, next_player)
 
     def is_over(self):
-        # Return True if win or draw
-        pass
+        return self.is_win("X") or self.is_win("O") or not self.get_available_moves()
 
     def is_win(self, player):
-        # Return True if player has won
-        pass
+        b = self.board
+        n = self.board_size
 
-    def evaluate(self,player):
-        #heuristic function that evaluates non-terminal states
-        pass
+        # Check rows and columns
+        for i in range(n):
+            if all(b[i][j] == player for j in range(n)):
+                return True
+            if all(b[j][i] == player for j in range(n)):
+                return True
 
+        # Check diagonals
+        if all(b[i][i] == player for i in range(n)):
+            return True
+        if all(b[i][n - 1 - i] == player for i in range(n)):
+            return True
+
+        return False
+
+
+    # I just added this in case we need it for Gemini implementation.
     def print_board(self):
-        # Print or display the board
-        pass
+        for row in self.board:
+            print(" | ".join(row))
+            print("-" * (self.board_size * 4 - 3))
+
+
     
