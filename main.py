@@ -19,7 +19,8 @@ def get_human_move(game):
 def main():
     board_size = 3  # Change to 5 or 7 for larger boards if you implement scalable heuristics
     game = Game(board_size=board_size, active_player="X")
-    ai = Minimax(max_depth=4)
+    # ai = Minimax(max_depth=8)
+    ai = AlphaBetaPruning(max_depth=8)
 
     print("Welcome to Tic Tac Toe!")
     print("You are X, Minimax is O\n")
@@ -35,7 +36,7 @@ def main():
             move = ai.choose_move(game)
             end_time = time.time()
             execution_time = end_time - start_time
-            print(f"Execution time: {execution_time:.8f} seconds")
+            print(f"Execution time: {execution_time:.12f} seconds")
 
         game = game.apply_move(move)
 

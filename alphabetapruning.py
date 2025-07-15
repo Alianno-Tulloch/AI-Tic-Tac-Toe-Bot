@@ -2,11 +2,11 @@ import math  # we need math for ±math.inf
 
 class AlphaBetaPruning:
     """
-    Alpha-Beta Pruning algorithm for m×n, k-in-a-row games (e.g., Tic-Tac-Toe, Connect 4).
+    Alpha-Beta Pruning algorithm for mxn, k-in-a-row games (e.g., Tic-Tac-Toe, Connect 4).
     Tracks node count for performance and supports depth-limited search.
     """
 
-    def __init__(self, max_depth=4):
+    def __init__(self, max_depth):
         self.max_depth = max_depth #max depth for search 
         self.node_count = 0 # count of nodes evaluated during the search
 
@@ -82,7 +82,8 @@ class AlphaBetaPruning:
             return 1000
         if game.is_win(min_player): # if min player wins, return a low score
             return -1000
-        return game.evaluate(max_player) 
+        return 0
+        # return game.evaluate(max_player) 
 
     def get_opponent(self, player): 
         return 'O' if player == 'X' else 'X' #returns the opponent player based on the current player

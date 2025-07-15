@@ -1,7 +1,7 @@
 import math
 
 class Minimax:
-    def __init__(self, max_depth=4):
+    def __init__(self, max_depth):
         self.max_depth = max_depth
         self.node_count = 0 # To track how many nodes we evaluate for each move.
         self.player = None
