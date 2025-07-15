@@ -38,9 +38,9 @@ console3 = "AI 1 Strat: Minimax"
 console4 = "AI 2 Strat: Minimax"
 
 # Load sprites
-square_img = pygame.image.load('Multi-Agent-Algorithm-Project-main\images\square.png').convert_alpha()
-baseimagex = pygame.image.load(r"Multi-Agent-Algorithm-Project-main\images\ticx.png").convert_alpha()
-baseimageo = pygame.image.load(r"Multi-Agent-Algorithm-Project-main\images\tico.png").convert_alpha()
+square_img = pygame.image.load("images/square.png").convert_alpha()
+baseimagex = pygame.image.load("images/ticx.png").convert_alpha()
+baseimageo = pygame.image.load("images/tico.png").convert_alpha()
 
 # Set up custom events and state variable
 keyboardinput = pygame.USEREVENT + 0
