@@ -102,5 +102,37 @@ class Game:
             print(" | ".join(row))
             print("-" * (self.board_size * 4 - 3))
 
+    
+    def evaluate(self, player): #checks how good the board looks for the player
+        """
+        Heuristic evaluation function for non-terminal game states.
+        Gives a basic score based on how many lines are still open for the player.
+        """
+        opponent = "O" if player == "X" else "X"
+        score = 0
+        n = self.board_size
+        b = self.board #saves board size nad boards itself into shorter names for easier use
+
+        def line_score(line): #line_score checks how many lines are open for the player 
+            if opponent in line:
+                return 0 #if other play is in it, return 0 points
+            return line.count(player)  #otherwise give you 1 point for each of your pieces in that line
+ 
+        lines = [] 
+
+        # Rows and columns
+        for i in range(n): #add all rows and columns to the lines
+            lines.append(b[i])  # row
+            lines.append([b[j][i] for j in range(n)])  # column
+
+        # Diagonals
+        lines.append([b[i][i] for i in range(n)])  # main diagonal
+        lines.append([b[i][n - 1 - i] for i in range(n)])  # anti-diagonal
+
+        for line in lines:
+            score += line_score(line) #adds results of line_score to the score
+
+        return score
+
 
     
