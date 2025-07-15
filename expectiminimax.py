@@ -1,8 +1,7 @@
 # Alianno
 import math # to access -math.inf (negative infinity)
-import minimax
 
-class Expectiminimax(minimax):
+class Expectiminimax():
     # Chance node explaination - Uncertain Opponent
     # - the algo assumes that the opponent is not fully rational, and will act at random
     
@@ -39,7 +38,7 @@ class Expectiminimax(minimax):
         if node is min:
             best_value = math.inf
             for child in node.children:
-                
+
 
 
         #           FIX LATER - remember to add node class, and to add child value to it

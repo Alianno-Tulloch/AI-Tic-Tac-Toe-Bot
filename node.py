@@ -6,27 +6,42 @@ class Node:
     # tracking how many nodes are tracked for each tree, throughout the entire game
     node_count = 0
 
-    def __init__(self, game, move=None, depth=0, probability=1.0):
+    def __init__(self, game, game_state=None, depth=0, probability=1.0):
         """
         Represents a single node in the game tree.
         """
-        self.game = game                # The Game state at this node
-        self.move = move                # The Move that led to this state. Default value is None if it's the root (or chance) Node
+        # The game that is being played. Allows the node, or any algorithm that interacts with it, to access the methods of the game,
+        # such as whether the game is in a winning state or not
+        self.game = game
+
+        # The current state that the game is in. AKA the current moves that have been performed.
+        # Default value is None if it's the root (or chance) Node
+        self.game_state = game_state
+        
         self.depth = depth              # Depth in game tree - used for pruning, and utility tracking
         self.probability = probability  # Used for chance nodes - manipulated by chance nodes, default value of 1 for all other nodes
         self.children = []              # Each child node connected to this node
 
-        self.node_type = self.get_node_type()  # "MAX", "MIN", or "CHANCE" - is checked in the algorithms to determine how to treat each node
+        # node_type: "MAX", "MIN", or "CHANCE" - is checked in the algorithms to determine how to treat each node
+        self.node_type = self.get_node_type()
         
         # Base score value, aka if the outcome is a win, a loss, or a draw/past the depth limit.
         # The values for each state are arbitrary
         self.eval_score = None
+
         # Utility = (Score - the amount of moves it took to reach it) - faster wins WILL be prioritized
         self.utility = None
 
         # Increment global counter on creation - this works because once a depth limit is reached,
         # the node will simply be blocked from creating more nodes to explore
         Node.node_count += 1
+
+
+
+
+    #                           EVERYTHING FROM HERE DOWN: Update method names to match with method names in the other classes
+
+
 
     def get_node_type(self):
         """
@@ -70,7 +85,7 @@ class Node:
             for next_state, _ in outcomes:
                 child = Node(
                     game=next_state,
-                    move=None,
+                    game_state=None,
                     depth=self.depth + 1,
                     probability=1.0 / num_outcomes
                 )
@@ -78,12 +93,12 @@ class Node:
 
         # MAX or MIN node: legal moves only
         else:
-            moves = self.game.get_available_moves()
-            for move in moves:
-                next_state = self.game.apply_move(move)
+            states = self.game.get_available_moves()
+            for state in states:
+                next_state = self.game.apply_move(state)
                 child = Node(
                     game=next_state,
-                    move=move,
+                    game_state=state,
                     depth=self.depth + 1,
                     probability=1.0
                 )
