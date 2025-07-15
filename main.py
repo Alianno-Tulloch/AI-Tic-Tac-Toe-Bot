@@ -1,6 +1,7 @@
 from game import Game
 from minimax import Minimax
 from alphabetapruning import AlphaBetaPruning
+import time
 # from expectiminimax import Exepctiminimax
 
 def get_human_move(game):
@@ -30,7 +31,11 @@ def main():
             move = get_human_move(game)
         else:
             print("Minimax AI is thinking...\n")
+            start_time = time.time()
             move = ai.choose_move(game)
+            end_time = time.time()
+            execution_time = end_time - start_time
+            print(f"Execution time: {execution_time:.8f} seconds")
 
         game = game.apply_move(move)
 
