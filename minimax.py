@@ -4,11 +4,13 @@ class Minimax:
     def __init__(self, max_depth=4):
         self.max_depth = max_depth
         self.node_count = 0 # To track how many nodes we evaluate for each move.
+        self.player = None
 
     def choose_move(self, game):
         self.node_count = 0
         best_value = -math.inf
         best_move = None
+        self.player = game.active_player
 
         for move in game.get_available_moves():
             new_game = game.apply_move(move)
@@ -44,15 +46,18 @@ class Minimax:
 
     # Leaving this in here for now, may be duplicate of what gets implemented in the game.
     def evaluate(self, game):
-        if game.is_win(game.active_player):
-            return -1
-        elif game.is_win(self.get_opponent(game.active_player)):
+        if game.is_win(self.player):
             return 1
+        elif game.is_win(self.get_opponent(self.player)):
+            return -1
         else:
             return 0
 
     def get_opponent(self, player):
-        return "B" if player == "W" else "W"
+        if player == "X":
+            return "O"
+        else:
+            return "X"
 
 
 
