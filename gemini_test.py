@@ -1,25 +1,23 @@
-import os
-from google import genai
-
-# Securely get the API key from the environment variable
-api_key = os.environ.get("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GEMINI_API_KEY environment variable not set.")
-client = genai.Client(api_key=api_key)
-
-
-def get_gemini_move(marker, board_size, board_state):
-    """ 
-    marker: str, 'X' or 'O'  
+def get_gemini_move(client, marker, board_size, board_state, invalid_moves=None):
+    """
+    client: genai.Client instance
+    marker: str, 'X' or 'O'
     board_size: int, e.g., 3 for 3x3
     board_state: list of lists, e.g., [['X', 'O', ''], ['', '', 'X'], ['O', '', '']]
+    invalid_moves: set of tuples, e.g., {(0,0), (1,2)}
     Returns: str, the AI's suggested move in the format "row,col"
     """
-    board_str = '\n'.join([' '.join(row) for row in board_state])
+    board_str = '\n'.join([f"{i}: " + ' | '.join(row) for i, row in enumerate(board_state)])
+    available_moves = [(r, c) for r in range(board_size) for c in range(board_size) if board_state[r][c] == '']
+    available_moves_str = ', '.join([f"({r},{c})" for r, c in available_moves])
+    invalid_moves_str = ', '.join([f"({move[0]},{move[1]})" for move in invalid_moves if isinstance(move, tuple) and len(move) == 2]) if invalid_moves else "None"
     prompt = (
-        f"Tic Tac Toe game of size {board_size}. You are {marker}. "
+        f"You are playing Tic Tac Toe as {marker} on a {board_size}x{board_size} board.\n"
+        f"Board format: each row is indexed, and cells are X, O, or blank.\n"
         f"Current board:\n{board_str}\n"
-        "Give your next move as row,col (0-indexed), and only the move."
+        f"Available moves: {available_moves_str}\n"
+        f"Do NOT use any of these invalid moves: {invalid_moves_str}\n"
+        "Your task: playing optimally, choose your next move as row,col (0-indexed). Respond ONLY with the move, e.g., 1,2."
     )
     response = client.models.generate_content(
         model="gemini-2.5-flash",
