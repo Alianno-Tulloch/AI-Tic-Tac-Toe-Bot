@@ -149,9 +149,35 @@ def evaluate_terminal_node(self):
     else:
         self.utility = 0  # Draw or no winner
 
+    def get_best_move(self):
+        if not self.children:
+            return None
 
+        best_child = self.children[0]
+        for child in self.children[1:]:
+            if self.node_type == "MAX":
+                if child.utility is not None and (best_child.utility is None or child.utility > best_child.utility):
+                    best_child = child
+            elif self.node_type == "MIN":
+                if child.utility is not None and (best_child.utility is None or child.utility < best_child.utility):
+                    best_child = child
 
+        return best_child.move
+    
 
+    @classmethod
+    def reset_counters(cls):
+        cls.total_nodes_generated = 0
+        cls.nodes_evaluated = 0
+        cls.nodes_pruned = 0
+
+    @classmethod
+    def get_performance_metrics(cls):
+        return {
+            'total_nodes_generated': cls.total_nodes_generated,
+            'nodes_evaluated': cls.nodes_evaluated,
+            'nodes_pruned': cls.nodes_pruned,
+        }
 
     def __str__(self):
         """Text label used in visualizations or debug printouts."""
