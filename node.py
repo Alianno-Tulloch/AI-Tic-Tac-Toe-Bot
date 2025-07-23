@@ -100,6 +100,8 @@ class Node:
                 - adds all outcomes with equal probabilities.
         """
 
+
+        #                       UPDATE COMMENTS FROM HERE                       #
         # Prevent duplicate expansion
         if self.is_expanded:
             return
