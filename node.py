@@ -1,119 +1,187 @@
 # Alianno
-# This file implements all of the logic for how the nodes for each algorithm work
+import math
 
 class Node:
-    # Class Level variable, used for performance metrics tracking,
-    # tracking how many nodes are tracked for each tree, throughout the entire game
-    node_count = 0
+    """
+    Represents a single node in the game tree.
+    All algorithms will call this node class when they explore the possible outcomes.
+    """
 
-    def __init__(self, game, game_state=None, depth=0, probability=1.0):
+    # Performance Metrics Tracking
+    total_nodes_generated = 0 # total nodes generated. NOT evaluated or pruned, just generated
+    nodes_evaluated = 0 # Nodes that have been checked/evaluated/explored by the algorithm
+    nodes_pruned = 0 # represents the number of nodes pruned by Alpha Beta
+
+    def __init__(self, game, move=None, depth=0, probability=1.0, parent=None):
         """
-        Represents a single node in the game tree.
+        Initialize a new node.
+        
+        Args:
+            game: Current game state
+            move: Move that led to this node (None if root)
+            depth: Depth in the tree
+            probability: Probability for chance nodes
+            parent: Parent node reference
         """
-        # The game that is being played. Allows the node, or any algorithm that interacts with it, to access the methods of the game,
-        # such as whether the game is in a winning state or not
-        self.game = game
+        self.game = game # the current game, and the game state that it's in
+        self.move = move # the current move being explored
+        self.depth = depth # the depth of the node in the tree
+        self.probability = probability # The probability, (only used by chance nodes)
+        self.parent = parent # the parent node, used for traversing
+        self.children = [] # the list of all children of the current node
 
-        # The current state that the game is in. AKA the current moves that have been performed.
-        # Default value is None if it's the root (or chance) Node
-        self.game_state = game_state
-        
-        self.depth = depth              # Depth in game tree - used for pruning, and utility tracking
-        self.probability = probability  # Used for chance nodes - manipulated by chance nodes, default value of 1 for all other nodes
-        self.children = []              # Each child node connected to this node
+        # Node classification
+        self.node_type = self.get_node_type() # "MAX", "MIN", or "CHANCE"
 
-        # node_type: "MAX", "MIN", or "CHANCE" - is checked in the algorithms to determine how to treat each node
-        self.node_type = self.get_node_type()
-        
-        # Base score value, aka if the outcome is a win, a loss, or a draw/past the depth limit.
-        # The values for each state are arbitrary
-        self.eval_score = None
+        # Evaluation Metrics
+        """
+        The utility of the node. Higher Utilty nodes are chosen.
+        - Equation: (10 for win, 0 for draw/depth limited, -10 for loss) - node.depth
+        """
+        self.utility = None 
+        self.alpha = -math.inf # Alpha value for pruning
+        self.beta = math.inf # Beta value for pruning
+        # added just in case we want to display depth limited nodes differently from win/loss/draw nodes
+        self.is_depth_limited = False # True if evaluation was due to reaching max depth
 
-        # Utility = (Score - the amount of moves it took to reach it) - faster wins WILL be prioritized
-        self.utility = None
+        # Visualization Metrics
+        self.is_pruned = False # Whether the node is pruned, used for data visualization
+        self.is_expanded = False # Whether children have been generated, used for data visualization
 
-        # Increment global counter on creation - this works because once a depth limit is reached,
-        # the node will simply be blocked from creating more nodes to explore
-        Node.node_count += 1
-
-
-
-
-    #                           EVERYTHING FROM HERE DOWN: Update method names to match with method names in the other classes
-
-
+        # Tracking
+        Node.total_nodes_generated += 1
+        self.node_id = Node.total_nodes_generated # node_id added for visualization purposes
 
     def get_node_type(self):
         """
-        Ask the Game object what type of node this is:
-        "MAX", "MIN", or "CHANCE".
-            - If "MAX": It is the algorithm's turn
-            - If "MIN": It is the rational opponents turn, an opponent who will ALWAYS make the most optimal decision
-                (Minimax, Alpha Beta Pruning)
-            - If "CHANCE": It is the uncertain opponent's turn, an opponent who is expected/assumed to make random decisions,
-                so your next MAX move is determined by which move has the highest chance of giving you the highest utility
-                based on the moves your opponent COULD take in the future
-                (Expectiminimax)
+        Determine whether this node is MAX, MIN, or CHANCE.
+        MAX = AI's move, MIN = opponent's move
+        CHANCE = used in expectiminimax for random events (if applicable)
+        
+        Returns:
+            str: "MAX", "MIN", or "CHANCE"
         """
-        return self.game.get_node_type()
+        if self.game.is_over():
+            return "TERMINAL"
+        
+        """                                                                THIS SECTION IS RESERVED FOR CHOICE NODES"""
+        
+        # Alternate between MAX and MIN based on depth
+        return "MAX" if self.depth % 2 == 0 else "MIN"
+    
+
+    def get_root_player(self):
+        """ 
+        Searches up the tree until it gets to the root node. Used for determining whether Algorithm (the root Maximimzing Node) wins or not
+        """
+        node = self
+        while node.parent is not None:
+            node = node.parent
+        return node.game.active_player  # or node.game.starting_player if available
+    
+    def get_opponent(self, player):
+        """Returns the opponent of the given player."""
+        return "O" if player == "X" else "X"
+
+
 
     def expand_children(self, max_depth=None):
         """
         Expands the node to look at its children.
             - If the node is a terminal/leaf node (no children, aka a win/lose/draw state), OR If the node hits the depth limit:
                 - Then store evaluate and set utility
-            - If the node is a CHANCE node:
-                - adds all outcomes with equal probabilities.
             - If the node is a MAX or MIN node:
                 - adds one child to the list, per available move.
+
+
+
+        CHANCE NODE will be added later, but if it's a chance node, it will   
+            - If the node is a CHANCE node:
+                - adds all outcomes with equal probabilities.
         """
 
-        #                                   THE REST OF THIS CODE HASNT BEEN CHECKED AND COMMENTED YET, BUT WILL BE VERY SOON
+        # Prevent duplicate expansion
+        if self.is_expanded:
+            return
+        
+        # If terminal state (game over), evaluate utility, and return
+        if self.game.is_over():
+            self.evaluate_terminal_node() # evaluates utility, saves it to the node instance's utility value
+            return
+        
+        # If we've reached max depth, mark as depth-limited and evaluate
+        if max_depth is not None and self.depth >= max_depth:
+            self.is_depth_limited = True # sets this check on, just in case we want to visualize depth limited nodes later
+            self.evaluate_terminal_node()
+            return
+        
+        # Get legal moves and create child nodes
+        moves = self.game.get_available_moves() # generates all possible moves from that exact game board state
+        for move in moves:
+            new_game = self.game.apply_move(move)
+            child_node = Node(
+                game=new_game,
+                move=move,
+                depth=self.depth + 1,
+                probability=self.probability,  # Chance node use
+                parent=self
+            )
+            self.children.append(child_node)
+
+        self.is_expanded = True
 
 
 
-        if self.game.is_over() or (max_depth is not None and self.depth >= max_depth):
-            self.eval_score = self.game.evaluate("AI")  # or self.game.active_player
-            self.utility = self.adjust_score_for_depth(self.eval_score)
-            return  # Do not expand further
+def evaluate_terminal_node(self):
+    """
+    Evaluates this node if it's terminal or depth-limited.
+    Sets its utility based on win/loss/draw or evaluation heuristic.
+    """
+    Node.nodes_evaluated += 1
+    root_player = self.get_root_player()
 
-        # CHANCE node: list of (Game object, probability) pairs
-        if self.node_type == "CHANCE":
-            outcomes = self.game.get_chance_outcomes()
-            num_outcomes = len(outcomes)
+    if self.game.is_win(root_player):
+        self.utility = 100 - self.depth  # Win for AI (higher utility = faster wins = better)
+    elif self.game.is_win(self.get_opponent(root_player)):
+        self.utility = -100 + self.depth  # Loss for AI (higher utility = slower loss = better)
+    elif self.is_depth_limited:
+        self.utility = 0  # Depth-limited node (neutral)
+    else:
+        self.utility = 0  # Draw or no winner
 
-            for next_state, _ in outcomes:
-                child = Node(
-                    game=next_state,
-                    game_state=None,
-                    depth=self.depth + 1,
-                    probability=1.0 / num_outcomes
-                )
-                self.children.append(child)
+    def get_best_move(self):
+        if not self.children:
+            return None
 
-        # MAX or MIN node: legal moves only
-        else:
-            states = self.game.get_available_moves()
-            for state in states:
-                next_state = self.game.apply_move(state)
-                child = Node(
-                    game=next_state,
-                    game_state=state,
-                    depth=self.depth + 1,
-                    probability=1.0
-                )
-                self.children.append(child)
+        best_child = self.children[0]
+        for child in self.children[1:]:
+            if self.node_type == "MAX":
+                if child.utility is not None and (best_child.utility is None or child.utility > best_child.utility):
+                    best_child = child
+            elif self.node_type == "MIN":
+                if child.utility is not None and (best_child.utility is None or child.utility < best_child.utility):
+                    best_child = child
 
-    def adjust_score_for_depth(self, score):
-        """
-        Decrease the score based on depth:
-        - Fast wins = higher score
-        - Slow losses = less penalized
-        """
-        if score == 10:
-            return score - self.depth
-        elif score == -10:
-            return score + self.depth
-        else:
-            return score
+        return best_child.move
+    
 
+    @classmethod
+    def reset_counters(cls):
+        cls.total_nodes_generated = 0
+        cls.nodes_evaluated = 0
+        cls.nodes_pruned = 0
+
+    @classmethod
+    def get_performance_metrics(cls):
+        return {
+            'total_nodes_generated': cls.total_nodes_generated,
+            'nodes_evaluated': cls.nodes_evaluated,
+            'nodes_pruned': cls.nodes_pruned,
+        }
+
+    def __str__(self):
+        """Text label used in visualizations or debug printouts."""
+        return f"Node(id={self.node_id}, type={self.node_type}, depth={self.depth}, utility={self.utility})"
+
+    def __repr__(self):
+        return self.__str__()
