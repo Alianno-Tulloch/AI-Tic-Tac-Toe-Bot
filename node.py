@@ -83,8 +83,46 @@ class Node:
         """Returns the opponent of the given player."""
         return "O" if player == "X" else "X"
 
+    def evaluate_terminal_node(self):
+        """
+        Evaluates this node if it's terminal or depth-limited.
+        Sets its utility based on win/loss/draw or evaluation heuristic.
+        """
+        Node.nodes_evaluated += 1
+        root_player = self.get_root_player()
+
+        if self.game.is_win(root_player):
+            self.utility = 100 - self.depth  # Win for AI (higher utility = faster wins = better)
+        elif self.game.is_win(self.get_opponent(root_player)):
+            self.utility = -100 + self.depth  # Loss for AI (higher utility = slower loss = better)
+        elif self.is_depth_limited:
+            self.utility = 0  # Depth-limited node (neutral)
+        else:
+            self.utility = 0  # Draw or no winner
 
 
+    """
+    Gets the best MAX or MIN move of all the children. If no children, then returns nothing.
+    MAX and MIN logic have been placed here because this base logic is used by all algorithms
+    """
+    def get_best_move(self):
+        # if this node doesn't have any kids (caused either by being a win/draw/loss outcome, or by
+        # being depth limited), then it is checked to find an outcome
+        if not self.children:
+            return None
+
+        # Searches children, and returns the MAX or MIN child, depending on the node type
+        best_child = self.children[0]
+        for child in self.children[1:]:
+            if self.node_type == "MAX":
+                if child.utility is not None and (best_child.utility is None or child.utility > best_child.utility):
+                    best_child = child
+            elif self.node_type == "MIN":
+                if child.utility is not None and (best_child.utility is None or child.utility < best_child.utility):
+                    best_child = child
+
+        return best_child.move
+    
     def expand_children(self, max_depth=None):
         """
         Expands the node to look at its children.
@@ -99,9 +137,7 @@ class Node:
             - If the node is a CHANCE node:
                 - adds all outcomes with equal probabilities.
         """
-
-
-        #                       UPDATE COMMENTS FROM HERE                       #
+        
         # Prevent duplicate expansion
         if self.is_expanded:
             return
@@ -131,48 +167,6 @@ class Node:
             self.children.append(child_node)
 
         self.is_expanded = True
-
-
-
-def evaluate_terminal_node(self):
-    """
-    Evaluates this node if it's terminal or depth-limited.
-    Sets its utility based on win/loss/draw or evaluation heuristic.
-    """
-    Node.nodes_evaluated += 1
-    root_player = self.get_root_player()
-
-    if self.game.is_win(root_player):
-        self.utility = 100 - self.depth  # Win for AI (higher utility = faster wins = better)
-    elif self.game.is_win(self.get_opponent(root_player)):
-        self.utility = -100 + self.depth  # Loss for AI (higher utility = slower loss = better)
-    elif self.is_depth_limited:
-        self.utility = 0  # Depth-limited node (neutral)
-    else:
-        self.utility = 0  # Draw or no winner
-
-
-    """
-    Gets the best MAX or MIN move of all the children. If no children, then returns nothing.
-    MAX and MIN logic have been placed here because this base logic is used by all algorithms
-    """
-    def get_best_move(self):
-        # if this node doesn't have any kids (caused either by being a win/draw/loss outcome, or by
-        # being depth limited), then it is checked to find an outcome
-        if not self.children:
-            return None
-
-        # Searches children, and returns the MAX or MIN child, depending on the node type
-        best_child = self.children[0]
-        for child in self.children[1:]:
-            if self.node_type == "MAX":
-                if child.utility is not None and (best_child.utility is None or child.utility > best_child.utility):
-                    best_child = child
-            elif self.node_type == "MIN":
-                if child.utility is not None and (best_child.utility is None or child.utility < best_child.utility):
-                    best_child = child
-
-        return best_child.move
     
 
     # Resets all class performance metrics.
