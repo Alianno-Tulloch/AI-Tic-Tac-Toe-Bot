@@ -106,27 +106,27 @@ class Node:
         if self.is_expanded:
             return
         
-        # If terminal state (game over), evaluate utility, and return
+        # If the game reaches a game over, check if it's a win/draw/loss, and return utility
         if self.game.is_over():
             self.evaluate_terminal_node() # evaluates utility, saves it to the node instance's utility value
             return
         
-        # If we've reached max depth, mark as depth-limited and evaluate
+        # If we've reached max depth, mark as depth-limited, check if it's a win/draw/loss, and return utility
         if max_depth is not None and self.depth >= max_depth:
             self.is_depth_limited = True # sets this check on, just in case we want to visualize depth limited nodes later
             self.evaluate_terminal_node()
             return
         
-        # Get legal moves and create child nodes
-        moves = self.game.get_available_moves() # generates all possible moves from that exact game board state
+        # Checks all available moves from this game state, and creates child nodes
+        moves = self.game.get_available_moves() # generates all possible moves from this exact game board state
         for move in moves:
             new_game = self.game.apply_move(move)
             child_node = Node(
-                game=new_game,
-                move=move,
-                depth=self.depth + 1,
-                probability=self.probability,  # Chance node use
-                parent=self
+                game = new_game,
+                move = move,
+                depth = self.depth + 1,
+                probability = self.probability,  # used for chance nodes
+                parent = self
             )
             self.children.append(child_node)
 
@@ -151,10 +151,18 @@ def evaluate_terminal_node(self):
     else:
         self.utility = 0  # Draw or no winner
 
+
+    """
+    Gets the best MAX or MIN move of all the children. If no children, then returns nothing.
+    MAX and MIN logic have been placed here because this base logic is used by all algorithms
+    """
     def get_best_move(self):
+        # if this node doesn't have any kids (caused either by being a win/draw/loss outcome, or by
+        # being depth limited), then it is checked to find an outcome
         if not self.children:
             return None
 
+        # Searches children, and returns the MAX or MIN child, depending on the node type
         best_child = self.children[0]
         for child in self.children[1:]:
             if self.node_type == "MAX":
@@ -167,12 +175,14 @@ def evaluate_terminal_node(self):
         return best_child.move
     
 
+    # Resets all class performance metrics.
     @classmethod
     def reset_counters(cls):
         cls.total_nodes_generated = 0
         cls.nodes_evaluated = 0
         cls.nodes_pruned = 0
 
+    # Returns all class performance metrics as a string
     @classmethod
     def get_performance_metrics(cls):
         return {
