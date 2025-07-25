@@ -7,10 +7,10 @@ class Minimax:
         """
         Initialize the Minimax algorithm.
         """
-        self.max_depth = max_depth
-        self.root_node = None
-        self.execution_time = 0
-        self.performance_metrics = {}
+        self.max_depth = max_depth # The max node depth that the algorithm is allowed to explore (default is 4)
+        self.root_node = None # The root node
+        self.execution_time = 0 # Execution time, in seconds
+        self.performance_metrics = {} # Holds performance metrics, such as execution_time, nodes_evaluated, total_nodes_generated
 
     def choose_move(self, game):
         """
@@ -24,7 +24,7 @@ class Minimax:
         self.root_node = Node(game=game, depth=0)
 
         # Compute utility from root using recursive minimax
-        self._minimax(self.root_node, self.max_depth, maximizing=True)
+        self.start_minimax(self.root_node, self.max_depth, maximizing=True)
 
         # Get best move from root node
         best_move = self.root_node.get_best_move()
@@ -47,9 +47,9 @@ class Minimax:
 
         return best_move
 
-    def _minimax(self, node, max_depth, maximizing):
+    def start_minimax(self, node, max_depth, maximizing):
         """
-        Recursive minimax function operating on Node tree.
+        Starts the recursive minimax algorithm that creates a node tree to find the best move
         """
         # Expand current node
         node.expand_children(max_depth)
@@ -58,16 +58,17 @@ class Minimax:
         if node.utility is not None:
             return node.utility
 
-        if maximizing:
+        # If MAXIMIZING NODE
+        if maximizing: 
             best_value = -math.inf
             for child in node.children:
-                value = self._minimax(child, max_depth, maximizing=False)
+                value = self.start_minimax(child, max_depth, maximizing=False)
                 best_value = max(best_value, value)
             node.utility = best_value
         else:
             best_value = math.inf
             for child in node.children:
-                value = self._minimax(child, max_depth, maximizing=True)
+                value = self.start_minimax(child, max_depth, maximizing=True)
                 best_value = min(best_value, value)
             node.utility = best_value
 
