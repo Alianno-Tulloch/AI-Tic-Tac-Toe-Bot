@@ -1,6 +1,8 @@
 from game import Game
+from random_game import RandomGame
 from minimax import Minimax
 from alphabeta import AlphaBetaPruning
+from expectiminimax import Expectiminimax
 import time
 # from expectiminimax import Exepctiminimax
 
@@ -18,9 +20,11 @@ def get_human_move(game):
 
 def main():
     board_size = 3  # Change to 5 or 7 for larger boards if you implement scalable heuristics
-    game = Game(board_size=board_size, active_player="X")
-    ai = Minimax(max_depth=8)
-    # ai = AlphaBetaPruning(max_depth=8)
+    game = Game(board_size = board_size, active_player = "X")
+    game = RandomGame(board_size = board_size, active_player = "X", random_round_interval = 3)
+    ai = Minimax(max_depth = 8)
+    # ai = AlphaBetaPruning(max_depth = 8)
+    # ai = Expectiminimax(max_depth = 8, random_round_interval = 3)
 
     print("Welcome to Tic Tac Toe!")
     print("You are X, Minimax is O\n")

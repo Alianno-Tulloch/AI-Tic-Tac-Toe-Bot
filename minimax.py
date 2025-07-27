@@ -3,7 +3,7 @@ import math
 from node import Node
 
 class Minimax:
-    def __init__(self, max_depth=4):
+    def __init__(self, max_depth = 4):
         """
         Initialize the Minimax algorithm.
         """
@@ -21,10 +21,10 @@ class Minimax:
         start_time = time.time()
 
         # Initialize root node
-        self.root_node = Node(game=game, depth=0)
+        self.root_node = Node(game = game, depth = 0)
 
         # Compute utility from root using recursive minimax
-        self.start_minimax(self.root_node, self.max_depth, maximizing=True)
+        self.start_minimax(self.root_node, self.max_depth, maximizing = True)
 
         # Get best move from root node
         best_move = self.root_node.get_best_move()
@@ -62,13 +62,13 @@ class Minimax:
         if maximizing: 
             best_value = -math.inf
             for child in node.children:
-                value = self.start_minimax(child, max_depth, maximizing=False)
+                value = self.start_minimax(child, max_depth, maximizing = False)
                 best_value = max(best_value, value)
             node.utility = best_value
         else:
             best_value = math.inf
             for child in node.children:
-                value = self.start_minimax(child, max_depth, maximizing=True)
+                value = self.start_minimax(child, max_depth, maximizing = True)
                 best_value = min(best_value, value)
             node.utility = best_value
 

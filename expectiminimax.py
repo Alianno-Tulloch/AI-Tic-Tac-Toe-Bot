@@ -3,7 +3,7 @@ import math
 from node import Node
 
 class Expectiminimax:
-    def __init__(self, max_depth=4, random_event_interval=3):
+    def __init__(self, max_depth = 4, random_event_interval = 3):
         """
         Initialize the Expectiminimax algorithm.
 
@@ -31,7 +31,7 @@ class Expectiminimax:
         start_time = time.time()
 
         # Initialize root node
-        self.root_node = Node(game=game, depth=0)
+        self.root_node = Node(game = game, depth = 0)
 
         # Begin expectiminimax traversal
         self._expectiminimax(self.root_node, self.max_depth)
@@ -61,7 +61,7 @@ class Expectiminimax:
         """
         Recursive Expectiminimax function
         """
-        node.expand_children(max_depth, chance_interval=self.random_event_interval)
+        node.expand_children(max_depth, chance_interval = self.random_event_interval)
 
         if node.utility is not None:
             return node.utility

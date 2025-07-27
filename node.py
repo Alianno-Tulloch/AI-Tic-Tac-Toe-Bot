@@ -12,7 +12,7 @@ class Node:
     nodes_evaluated = 0 # Nodes that have been checked/evaluated/explored by the algorithm
     nodes_pruned = 0 # represents the number of nodes pruned by Alpha Beta
 
-    def __init__(self, game, move=None, depth=0, probability=1.0, parent=None):
+    def __init__(self, game, move = None, depth = 0, probability = 1.0, parent = None):
         """
         Initialize a new node.
         
@@ -123,7 +123,7 @@ class Node:
 
         return best_child.move
     
-    def expand_children(self, max_depth=None):
+    def expand_children(self, max_depth = None):
         """
         Expands the node to look at its children.
             - If the node is a terminal/leaf node (no children, aka a win/lose/draw state), OR If the node hits the depth limit:
@@ -187,7 +187,7 @@ class Node:
 
     def __str__(self):
         """Text label used in visualizations or debug printouts."""
-        return f"Node(id={self.node_id}, type={self.node_type}, depth={self.depth}, utility={self.utility})"
+        return f"Node(id = {self.node_id}, type = {self.node_type}, depth = {self.depth}, utility = {self.utility})"
 
     def __repr__(self):
         return self.__str__()

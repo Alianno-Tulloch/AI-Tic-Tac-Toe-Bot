@@ -7,7 +7,7 @@ class AlphaBetaPruning:
     Alpha-Beta Pruning algorithm using the Node-based tree structure.
     """
 
-    def __init__(self, max_depth=4):
+    def __init__(self, max_depth = 4):
         self.max_depth = max_depth
         self.root_node = None
         self.execution_time = 0
@@ -22,10 +22,10 @@ class AlphaBetaPruning:
         start_time = time.time()
 
         # Create root node
-        self.root_node = Node(game=game, depth=0)
+        self.root_node = Node(game = game, depth = 0)
 
         # Start recursive search
-        self.alpha_beta(self.root_node, self.max_depth, alpha=-math.inf, beta=math.inf, maximizing=True)
+        self.alpha_beta(self.root_node, self.max_depth, alpha = -math.inf, beta = math.inf, maximizing = True)
 
         # Select best move from children
         best_move = self.root_node.get_best_move()
@@ -63,7 +63,7 @@ class AlphaBetaPruning:
         if maximizing:
             best_value = -math.inf
             for child in node.children:
-                value = self.alpha_beta(child, max_depth, alpha, beta, maximizing=False)
+                value = self.alpha_beta(child, max_depth, alpha, beta, maximizing = False)
                 best_value = max(best_value, value)
                 alpha = max(alpha, best_value)
 
@@ -78,7 +78,7 @@ class AlphaBetaPruning:
         else:
             best_value = math.inf
             for child in node.children:
-                value = self.alpha_beta(child, max_depth, alpha, beta, maximizing=True)
+                value = self.alpha_beta(child, max_depth, alpha, beta, maximizing = True)
                 best_value = min(best_value, value)
                 beta = min(beta, best_value)
 
