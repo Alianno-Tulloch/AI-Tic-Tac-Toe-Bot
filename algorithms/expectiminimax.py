@@ -1,6 +1,6 @@
 import time
 import math
-from node import Node
+from algorithms.node import Node
 
 class Expectiminimax:
     def __init__(self, max_depth = 4, random_round_interval = 3):
