@@ -12,7 +12,7 @@ class Node:
     nodes_evaluated = 0 # Nodes that have been checked/evaluated/explored by the algorithm
     nodes_pruned = 0 # represents the number of nodes pruned by Alpha Beta
 
-    def __init__(self, game, move=None, depth=0, probability=1.0, parent=None):
+    def __init__(self, game, move = None, depth = 0, probability = 1.0, parent = None):
         """
         Initialize a new node.
         
@@ -83,76 +83,35 @@ class Node:
         """Returns the opponent of the given player."""
         return "O" if player == "X" else "X"
 
-
-
-    def expand_children(self, max_depth=None):
+    def evaluate_terminal_node(self):
         """
-        Expands the node to look at its children.
-            - If the node is a terminal/leaf node (no children, aka a win/lose/draw state), OR If the node hits the depth limit:
-                - Then store evaluate and set utility
-            - If the node is a MAX or MIN node:
-                - adds one child to the list, per available move.
-
-
-
-        CHANCE NODE will be added later, but if it's a chance node, it will   
-            - If the node is a CHANCE node:
-                - adds all outcomes with equal probabilities.
+        Evaluates this node if it's terminal or depth-limited.
+        Sets its utility based on win/loss/draw or evaluation heuristic.
         """
+        Node.nodes_evaluated += 1
+        root_player = self.get_root_player()
 
-        # Prevent duplicate expansion
-        if self.is_expanded:
-            return
-        
-        # If terminal state (game over), evaluate utility, and return
-        if self.game.is_over():
-            self.evaluate_terminal_node() # evaluates utility, saves it to the node instance's utility value
-            return
-        
-        # If we've reached max depth, mark as depth-limited and evaluate
-        if max_depth is not None and self.depth >= max_depth:
-            self.is_depth_limited = True # sets this check on, just in case we want to visualize depth limited nodes later
-            self.evaluate_terminal_node()
-            return
-        
-        # Get legal moves and create child nodes
-        moves = self.game.get_available_moves() # generates all possible moves from that exact game board state
-        for move in moves:
-            new_game = self.game.apply_move(move)
-            child_node = Node(
-                game=new_game,
-                move=move,
-                depth=self.depth + 1,
-                probability=self.probability,  # Chance node use
-                parent=self
-            )
-            self.children.append(child_node)
-
-        self.is_expanded = True
+        if self.game.is_win(root_player):
+            self.utility = 100 - self.depth  # Win for AI (higher utility = faster wins = better)
+        elif self.game.is_win(self.get_opponent(root_player)):
+            self.utility = -100 + self.depth  # Loss for AI (higher utility = slower loss = better)
+        elif self.is_depth_limited:
+            self.utility = 0  # Depth-limited node (neutral)
+        else:
+            self.utility = 0  # Draw or no winner
 
 
-
-def evaluate_terminal_node(self):
     """
-    Evaluates this node if it's terminal or depth-limited.
-    Sets its utility based on win/loss/draw or evaluation heuristic.
+    Gets the best MAX or MIN move of all the children. If no children, then returns nothing.
+    MAX and MIN logic have been placed here because this base logic is used by all algorithms
     """
-    Node.nodes_evaluated += 1
-    root_player = self.get_root_player()
-
-    if self.game.is_win(root_player):
-        self.utility = 100 - self.depth  # Win for AI (higher utility = faster wins = better)
-    elif self.game.is_win(self.get_opponent(root_player)):
-        self.utility = -100 + self.depth  # Loss for AI (higher utility = slower loss = better)
-    elif self.is_depth_limited:
-        self.utility = 0  # Depth-limited node (neutral)
-    else:
-        self.utility = 0  # Draw or no winner
-
     def get_best_move(self):
+        # if this node doesn't have any kids (caused either by being a win/draw/loss outcome, or by
+        # being depth limited), then it is checked to find an outcome
         if not self.children:
             return None
 
+        # Searches children, and returns the MAX or MIN child, depending on the node type
         best_child = self.children[0]
         for child in self.children[1:]:
             if self.node_type == "MAX":
@@ -164,13 +123,97 @@ def evaluate_terminal_node(self):
 
         return best_child.move
     
+    def expand_children(self, max_depth = None, random_chance_interval = None):
+        """
+        Expands the node to look at its children.
+            - If the node is a terminal/leaf node (no children, aka a win/lose/draw state), OR If the node hits the depth limit:
+                - Then store evaluate and set utility
+            - If the node is a MAX or MIN node:
+                - adds one child to the list, per available move.
 
+        CHANCE NODE will be added later, but if it's a chance node, it will   
+            - If the node is a CHANCE node:
+                - adds all outcomes with equal probabilities.
+        """
+        
+        # Prevent duplicate expansion
+        if self.is_expanded:
+            return
+        
+        # If the game reaches a game over, check if it's a win/draw/loss, and return utility
+        if self.game.is_over():
+            self.evaluate_terminal_node() # evaluates utility, saves it to the node instance's utility value
+            return
+        
+        # If we've reached max depth, mark as depth-limited, check if it's a win/draw/loss, and return utility
+        if max_depth is not None and self.depth >= max_depth:
+            self.is_depth_limited = True # sets this check on, just in case we want to visualize depth limited nodes later
+            self.evaluate_terminal_node()
+            return
+        
+        # CHANCE NODE SECTION:
+        if random_chance_interval is not None and self.depth % random_chance_interval == 0 and self.depth != 0:
+            self.node_type = "CHANCE"
+            # Get all occupied squares
+            occupied = [(r, c) for r in range(self.game.board_size)
+                                for c in range(self.game.board_size)
+                                if self.game.board[r][c] != " "]
+            num_outcomes = len(occupied)
+            if num_outcomes == 0:
+                self.evaluate_terminal_node()
+                return
+
+            prob = 1.0 / num_outcomes
+            for square in occupied:
+                # Make a copy of the board and clear this square
+                new_board = [row[:] for row in self.game.board]
+                r, c = square
+                new_board[r][c] = " "
+                # Create a new game with same active player
+                new_game = self.game.__class__(
+                    board_size = self.game.board_size,
+                    board = new_board,
+                    active_player = self.game.active_player,
+                    random_round_interval=getattr(self.game, 'random_round_interval', 3)
+                )
+                child_node = Node(
+                    game = new_game,
+                    move = ("CHANCE", square),
+                    depth = self.depth + 1,
+                    probability = prob,
+                    parent = self
+                )
+                self.children.append(child_node)
+
+            self.is_expanded = True
+            return
+
+        
+        # MIN and MAX NODE SECTION
+        # Checks all available moves from this game state, and creates child nodes
+        moves = self.game.get_available_moves() # generates all possible moves from this exact game board state
+        for move in moves:
+            new_game = self.game.apply_move(move)
+            child_node = Node(
+                game = new_game,
+                move = move,
+                depth = self.depth + 1,
+                probability = self.probability,  # used for chance nodes
+                parent = self
+            )
+            self.children.append(child_node)
+
+        self.is_expanded = True
+    
+
+    # Resets all class performance metrics.
     @classmethod
     def reset_counters(cls):
         cls.total_nodes_generated = 0
         cls.nodes_evaluated = 0
         cls.nodes_pruned = 0
 
+    # Returns all class performance metrics as a string
     @classmethod
     def get_performance_metrics(cls):
         return {
@@ -181,7 +224,7 @@ def evaluate_terminal_node(self):
 
     def __str__(self):
         """Text label used in visualizations or debug printouts."""
-        return f"Node(id={self.node_id}, type={self.node_type}, depth={self.depth}, utility={self.utility})"
+        return f"Node(id = {self.node_id}, type = {self.node_type}, depth = {self.depth}, utility = {self.utility})"
 
     def __repr__(self):
         return self.__str__()
