@@ -1,6 +1,6 @@
 from game import Game
-from minimax_v2 import Minimax
-from alphabetapruning import AlphaBetaPruning
+from minimax import Minimax
+from alphabeta import AlphaBetaPruning
 import time
 # from expectiminimax import Exepctiminimax
 

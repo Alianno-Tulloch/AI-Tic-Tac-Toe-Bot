@@ -1,62 +1,97 @@
-# Alianno
-import math # to access -math.inf (negative infinity)
+import time
+import math
+from node import Node
 
-class Expectiminimax():
-    # Chance node explaination - Uncertain Opponent
-    # - the algo assumes that the opponent is not fully rational, and will act at random
-    
-    # Implementation: If this algorithm is selected, it assumes that Gemini is opponents an Uncertain Opponent, and 
-    # that the Human is a certain opponent. Therefore, AI vs Algo uses only Max and Chance Nodes,
-    # while Human vs Algo uses Max and Min Nodes
-    #       - why? because otherwise, Min is implemented for no reason. This can be changed later if needed.
+class Expectiminimax:
+    def __init__(self, max_depth=4, random_event_interval=3):
+        """
+        Initialize the Expectiminimax algorithm.
 
-
-    def __init__(self, max_depth = 4):
+        Args:
+            max_depth (int): Maximum depth for tree exploration
+            random_event_interval (int): Number of plies before a random event occurs
+        """
         self.max_depth = max_depth
-        # node_count counts how many nodes were evaluated - for tracking performance metrics
-        self.node_count = 0
+        self.random_event_interval = random_event_interval  # how often randomness happens (in plies)
+        self.root_node = None
+        self.execution_time = 0
+        self.performance_metrics = {}
 
     def choose_move(self, game):
-        self.node_count = 0
+        """
+        Choose the best move using Expectiminimax algorithm.
 
-    
-    def Expectiminimax(self, node, depth):
-        if game.is_over() or depth == 0:
-            return self.evaluate
+        Args:
+            game: Current game state
 
-        #           FIX LATER
-        # If this is a max node, run this code
-        if node is max:
+        Returns:
+            tuple: Best move
+        """
+        Node.reset_counters()
+        start_time = time.time()
+
+        # Initialize root node
+        self.root_node = Node(game=game, depth=0)
+
+        # Begin expectiminimax traversal
+        self._expectiminimax(self.root_node, self.max_depth)
+
+        best_move = self.root_node.get_best_move()
+
+        # Capture performance data
+        end_time = time.time()
+        self.execution_time = end_time - start_time
+        self.performance_metrics = {
+            'algorithm': 'Expectiminimax',
+            'max_depth': self.max_depth,
+            'execution_time': self.execution_time,
+            'nodes_evaluated': Node.nodes_evaluated,
+            'total_nodes_generated': Node.total_nodes_generated,
+            'nodes_pruned': Node.nodes_pruned,
+        }
+
+        print("Expectiminimax Performance:")
+        print(f"  Execution time: {self.execution_time:.4f} seconds")
+        print(f"  Nodes evaluated: {Node.nodes_evaluated}")
+        print(f"  Total nodes generated: {Node.total_nodes_generated}")
+
+        return best_move
+
+    def _expectiminimax(self, node, max_depth):
+        """
+        Recursive Expectiminimax function
+        """
+        node.expand_children(max_depth, chance_interval=self.random_event_interval)
+
+        if node.utility is not None:
+            return node.utility
+
+        if node.node_type == "MAX":
             best_value = -math.inf
             for child in node.children:
-                best_value = max(best_value, ExpectiMax(child, depth - 1))
-            return best_value
+                val = self._expectiminimax(child, max_depth)
+                best_value = max(best_value, val)
+            node.utility = best_value
 
-
-        #           FIX LATER
-        # If this is a min node, run this code
-        if node is min:
+        elif node.node_type == "MIN":
             best_value = math.inf
             for child in node.children:
+                val = self._expectiminimax(child, max_depth)
+                best_value = min(best_value, val)
+            node.utility = best_value
 
-
-
-        #           FIX LATER - remember to add node class, and to add child value to it
-        # If this is a chance node, run this code
-        else:
-            best_value = 0
+        elif node.node_type == "CHANCE":
+            # Expected utility over all random outcomes
+            expected_utility = 0
             for child in node.children:
-                prob = probability(child)
-                best_value += prob * Expectiminimax(child, depth - 1)
-            return best_value
+                val = self._expectiminimax(child, max_depth)
+                expected_utility += child.probability * val
+            node.utility = expected_utility
 
-    #                       Fix later
-    # The way this should work - win/lose is an arbitrary score, but the more moves/the greater the depth it took to win, 
-    # the lower the score, and the less optimal this path is
-    def evaluate(self, game):
-        if game.is_win(game.active_player):
-            return -10 - depth
-        elif game.is_win(self.get_opponent(game.active_player)):
-            return 10 - depth
-        else:
-            return 0
+        return node.utility
+
+    def get_performance_metrics(self):
+        return self.performance_metrics.copy()
+
+    def get_game_tree(self):
+        return self.root_node
