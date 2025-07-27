@@ -3,16 +3,16 @@ import math
 from node import Node
 
 class Expectiminimax:
-    def __init__(self, max_depth = 4, random_event_interval = 3):
+    def __init__(self, max_depth = 4, random_round_interval = 3):
         """
         Initialize the Expectiminimax algorithm.
 
         Args:
             max_depth (int): Maximum depth for tree exploration
-            random_event_interval (int): Number of plies before a random event occurs
+            random_round_interval (int): Number of plies before a random event occurs
         """
         self.max_depth = max_depth
-        self.random_event_interval = random_event_interval  # how often randomness happens (in plies)
+        self.random_round_interval = random_round_interval  # how often randomness happens (in plies)
         self.root_node = None
         self.execution_time = 0
         self.performance_metrics = {}
@@ -61,7 +61,7 @@ class Expectiminimax:
         """
         Recursive Expectiminimax function
         """
-        node.expand_children(max_depth, chance_interval = self.random_event_interval)
+        node.expand_children(max_depth, chance_interval = self.random_round_interval)
 
         if node.utility is not None:
             return node.utility

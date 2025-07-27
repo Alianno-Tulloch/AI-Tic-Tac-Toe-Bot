@@ -131,8 +131,6 @@ class Node:
             - If the node is a MAX or MIN node:
                 - adds one child to the list, per available move.
 
-
-
         CHANCE NODE will be added later, but if it's a chance node, it will   
             - If the node is a CHANCE node:
                 - adds all outcomes with equal probabilities.
