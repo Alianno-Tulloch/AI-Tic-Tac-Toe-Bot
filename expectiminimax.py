@@ -61,7 +61,7 @@ class Expectiminimax:
         """
         Recursive Expectiminimax function
         """
-        node.expand_children(max_depth, chance_interval = self.random_round_interval)
+        node.expand_children(max_depth, random_chance_interval = self.random_round_interval)
 
         if node.utility is not None:
             return node.utility

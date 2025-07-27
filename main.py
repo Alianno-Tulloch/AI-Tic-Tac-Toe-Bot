@@ -24,7 +24,7 @@ def main():
     game = RandomGame(board_size = board_size, active_player = "X", random_round_interval = 3)
     # ai = Minimax(max_depth = 8)
     # ai = AlphaBetaPruning(max_depth = 8)
-    ai = Expectiminimax(max_depth = 8, random_round_interval = 3)
+    ai = Expectiminimax(max_depth = 6, random_round_interval = 3)
 
     print("Welcome to Tic Tac Toe!")
     print("You are X, Minimax is O\n")

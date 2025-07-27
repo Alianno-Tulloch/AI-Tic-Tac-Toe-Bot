@@ -123,7 +123,7 @@ class Node:
 
         return best_child.move
     
-    def expand_children(self, max_depth = None):
+    def expand_children(self, max_depth = None, random_chance_interval = None):
         """
         Expands the node to look at its children.
             - If the node is a terminal/leaf node (no children, aka a win/lose/draw state), OR If the node hits the depth limit:
@@ -151,6 +151,45 @@ class Node:
             self.evaluate_terminal_node()
             return
         
+        # CHANCE NODE SECTION:
+        if random_chance_interval is not None and self.depth % random_chance_interval == 0 and self.depth != 0:
+            self.node_type = "CHANCE"
+            # Get all occupied squares
+            occupied = [(r, c) for r in range(self.game.board_size)
+                                for c in range(self.game.board_size)
+                                if self.game.board[r][c] != " "]
+            num_outcomes = len(occupied)
+            if num_outcomes == 0:
+                self.evaluate_terminal_node()
+                return
+
+            prob = 1.0 / num_outcomes
+            for square in occupied:
+                # Make a copy of the board and clear this square
+                new_board = [row[:] for row in self.game.board]
+                r, c = square
+                new_board[r][c] = " "
+                # Create a new game with same active player
+                new_game = self.game.__class__(
+                    board_size = self.game.board_size,
+                    board = new_board,
+                    active_player = self.game.active_player,
+                    random_round_interval=getattr(self.game, 'random_round_interval', 3)
+                )
+                child_node = Node(
+                    game = new_game,
+                    move = ("CHANCE", square),
+                    depth = self.depth + 1,
+                    probability = prob,
+                    parent = self
+                )
+                self.children.append(child_node)
+
+            self.is_expanded = True
+            return
+
+        
+        # MIN and MAX NODE SECTION
         # Checks all available moves from this game state, and creates child nodes
         moves = self.game.get_available_moves() # generates all possible moves from this exact game board state
         for move in moves:
