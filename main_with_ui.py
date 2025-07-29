@@ -8,6 +8,7 @@ from algorithms.alphabeta import AlphaBetaPruning
 from algorithms.expectiminimax import Expectiminimax
 from decision_tree.generate_decision_tree import generate_decision_tree
 import sys
+import threading
 
 # Initialize pygame
 pygame.init()
@@ -48,6 +49,7 @@ clear = pygame.USEREVENT + 3
 vizualise = pygame.USEREVENT + 4
 state = "title"
 buttonchanged = True
+ai_thread_running = False
 
 # Create Button instances
 test_button1 = Button(615, 30, 160, 30)
@@ -57,7 +59,7 @@ test_button4 = Button(800, 70, 160, 30)
 test_button5 = Button(800, 110, 160, 30)
 test_button6 = Button(800, 150, 160, 30)
 test_button7 = Button(615, 150, 160, 30)
-test_button8 = Button(615, 110, 250, 30)
+test_button8 = Button(615, 190, 250, 30)
 
 # Initialize Game Settings and Player Variables
 boardsize = 3
@@ -76,10 +78,10 @@ decision_tree_root = None
 # Draw Tic Tac Toe board layout
 pygame.draw.rect(DISPLAYSURF, BLACK, pygame.Rect(30, 30, 570, 550), 2)
 
-# Draw buttons, button text
+# To draw buttons & button text
 def updatebuttons(buttonchanged):
     if buttonchanged:
-        pygame.draw.rect(DISPLAYSURF, WHITE, pygame.Rect(610, 25, 355, 180))
+        pygame.draw.rect(DISPLAYSURF, WHITE, pygame.Rect(610, 25, 355, 210))
         if state == "title":
             test_button1.draw(DISPLAYSURF, BLACK)
             test_button2.draw(DISPLAYSURF, BLACK)
@@ -95,9 +97,10 @@ def updatebuttons(buttonchanged):
             DISPLAYSURF.blit(text6, (810, 151))
         elif state == "results":
             test_button7.draw(DISPLAYSURF, BLACK)
-            test_button8.draw(DISPLAYSURF, BLACK)
             DISPLAYSURF.blit(text7, (625, 151))
-            DISPLAYSURF.blit(text8, (625, 111))
+        if state != "title":
+            test_button8.draw(DISPLAYSURF, BLACK)
+            DISPLAYSURF.blit(text8, (625, 191))
         buttonchanged = False
     return buttonchanged
 
@@ -110,6 +113,21 @@ def updateconsole(console, x, y, w, h):
         DISPLAYSURF.blit(font.render(line, True, BLACK), (x, i))
         i += 30
     pygame.display.update()
+
+# To render visualized decision tree
+def update_visual_tree(console):
+    if decision_tree_root:
+        generate_decision_tree(decision_tree_root, max_nodes=100)
+        console += "\nDesicion Tree file created as\nvisualized_decision_tree.png\n\nShort preview generated."
+        console2 = ""
+        updateconsole(console2, 975, 30, 500, 800)
+        baseimagetree = pygame.image.load(r"visualized_decision_tree.png").convert_alpha()
+        baseimagetree = pygame.transform.scale(baseimagetree, (400, 400))
+        DISPLAYSURF.blit(baseimagetree, (980, 30))
+    else:
+        console += "\nNo tree available."
+    updateconsole(console, 615, 300, 350, 300)
+    return console
 
 # To update an (AI) player's strategy
 def update_strategy(player, strat, depth_limit):
@@ -134,34 +152,53 @@ def clear_board(type):
 # To get human player's move
 def get_human_move(game, console):
     waiting = True
-    console2 = "Click to enter your move: "
+    console2 = "\nClick to enter your move: "
+    console3 = ""
     while waiting == True:
+        # If visualize button pressed
+        if test_button8.clicked():
+            pygame.event.post(pygame.event.Event(vizualise))
+            console3 = ""
+        # Event handler
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == vizualise:
+                console3 = update_visual_tree(console3)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 row, col = gameplay.clicked_rowcol(game)
                 if (row, col) in game.get_available_moves():
                     return (row, col)
                 else:
-                    console2 = "That spot is taken or invalid.\nTry again"
-        updateconsole(console + console2, 615, 300, 350, 300)        
+                    console2 = "\nThat spot is taken or invalid.\nTry again"
+        updateconsole(console + console2 + console3, 615, 300, 350, 300)
+
+# To get ai move (threaded so ui doesn't wait)
+def get_ai_move():
+    global move, decision_tree_root, ai_thread_running
+    ai_thread_running = True
+    if tictactoe.active_player == "X":
+        move, decision_tree_root = player1.choose_move(tictactoe)
+    elif tictactoe.active_player == "O":
+        move, decision_tree_root = player2.choose_move(tictactoe)
+    ai_thread_running = False
 
 # Main Loop
 while True:
-    # Draw console, and tic tac toe board
+    # Draw console, buttons and tic tac toe board
     buttonchanged = updatebuttons(buttonchanged)
     updateconsole(console, 615, 300, 350, 300)
     gameplay.draw_turn(DISPLAYSURF, tictactoe)
 
+    # Default console text in Title Screen
     if state == "title":
         if game_type == "Random":
             console = console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nRandom Event Interval: {rdm_event}\nAI 1 Strat: {ai1_strat}({depth_limit1})\nAI 2 Strat: {ai2_strat}({depth_limit2})"
         else:
             console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {ai1_strat}({depth_limit1})\nAI 2 Strat: {ai2_strat}({depth_limit2})"
     
-    # Check if any menu buttons have been clicked
+    # Check if any menu buttons have been clicked and post event
     if state == "title":
         if test_button1.clicked():
             pygame.event.post(pygame.event.Event(ai_vs_ai))
@@ -182,6 +219,7 @@ while True:
     if state == "results":
         if test_button7.clicked():
             pygame.event.post(pygame.event.Event(clear))
+    if state != "title":
         if test_button8.clicked():
             pygame.event.post(pygame.event.Event(vizualise))
 
@@ -228,13 +266,14 @@ while True:
                             temp = chr(event.key)
                     if temp.isdigit() and (temp == "1" or temp == "2"):
                         state = 'title'
-                # Update board
+                # Update algorithms to fit with regular game
                 if temp == "1":
                     game_type = "Regular"
                     if ai1_strat == "ExpectMM":
                         ai1_strat = "Minimax"
                     if ai2_strat == "ExpectMM":
                         ai2_strat = "Minimax"
+                # Get random even interval
                 elif temp == "2":
                     game_type = "Random"
                     state = "pick"
@@ -342,34 +381,61 @@ while True:
             print("-"*30)
             print("\nNEW AI VS AI GAME:\n")
 
+            # Game Loop
             while not tictactoe.is_over():
                 tictactoe.print_board()
                 gameplay.draw_turn(DISPLAYSURF, tictactoe)
                 xscore = tictactoe.evaluate("X")
                 oscore = tictactoe.evaluate("O")
-                console = f"Player X evaluated score: {xscore}\nPlayer O evaluated score: {oscore}\n\n"
+                console = f"Player X evaluated score: {xscore}\nPlayer O evaluated score: {oscore}\n"
                 # Player 1
-                if tictactoe.active_player == "X":
+                if tictactoe.active_player == "X" and ai_thread_running == False:
                     print(f"Player X turn:\n{ai1_strat} AI is thinking...\n")
-                    console += f"Player X turn:\n{ai1_strat} AI is thinking..."
+                    console += f"\nPlayer X turn:\n{ai1_strat} AI is thinking..."
                     updateconsole(console, 615, 300, 350, 300)
-                    move, decision_tree_root = player1.choose_move(tictactoe)
+                    # Get move using thread
+                    threading.Thread(target=get_ai_move).start()
+                    # Wait for thread to conclude, can still generate tree while waiting
+                    while ai_thread_running:
+                        if test_button8.clicked():
+                            pygame.event.post(pygame.event.Event(vizualise))
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            elif event.type == vizualise:
+                                console3 = update_visual_tree(console)
+                    # Print metrics for last move
                     metrics = player1.get_performance_metrics()
                     console2 = f"Player X:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time (s): {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
                     updateconsole(console2, 975, 30, 500, 200)
                 # Player 2
-                elif tictactoe.active_player == "O":
+                elif tictactoe.active_player == "O" and ai_thread_running == False:
                     print(f"Player O turn:\n{ai2_strat} AI is thinking...\n")
-                    console += f"Player O turn:\n{ai2_strat} AI is thinking..."
+                    console += f"\nPlayer O turn:\n{ai2_strat} AI is thinking..."
                     updateconsole(console, 615, 300, 350, 300)
-                    move, decision_tree_root = player2.choose_move(tictactoe)
+                    # Get move using thread
+                    threading.Thread(target=get_ai_move).start()
+                    # Wait for thread to conclude, can still generate tree while waiting
+                    while ai_thread_running:
+                        if test_button8.clicked():
+                            pygame.event.post(pygame.event.Event(vizualise))
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            elif event.type == vizualise:
+                                console3 = update_visual_tree(console)
+                    # Print metrics for last move
                     metrics = player2.get_performance_metrics()
                     console2 = f"Player O:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
                     updateconsole(console2, 975, 280, 500, 200)
-
+                # Apply move
                 tictactoe = tictactoe.apply_move(move)
+            # Display final turn
             tictactoe.print_board()
             gameplay.draw_turn(DISPLAYSURF, tictactoe)
+            # Declare winner and switch to results screen
             if tictactoe.is_win("X"):
                 print(f"Player X ({ai1_strat}) wins!")
                 console = f"Player X ({ai1_strat}) wins!"
@@ -391,13 +457,13 @@ while True:
             player2 = update_strategy(player2, ai1_strat, depth_limit1)
             print("-"*30)
             print("\nNEW PLAYER VS AI GAME:\n")
-
+            # Game Loop
             while tictactoe.is_over() == False:
                 tictactoe.print_board()
                 gameplay.draw_turn(DISPLAYSURF, tictactoe)
                 xscore = tictactoe.evaluate("X")
                 oscore = tictactoe.evaluate("O")
-                console = f"Player X evaluated score: {xscore}\nPlayer O evaluated score: {oscore}\n\n"
+                console = f"Player X evaluated score: {xscore}\nPlayer O evaluated score: {oscore}\n"
                 # Player 1
                 if tictactoe.active_player == "X":
                     print("Your turn:")
@@ -405,17 +471,30 @@ while True:
                 # Player 2
                 elif tictactoe.active_player == "O":
                     print(f"AI 1's turn:\n{ai1_strat} AI is thinking...")
-                    console += f"AI 1's turn:\n{ai1_strat} AI is thinking..."
+                    console += f"\nAI 1's turn:\n{ai1_strat} AI is thinking..."
                     updateconsole(console, 615, 300, 350, 300)
-                    move, decision_tree_root = player2.choose_move(tictactoe)
+                    # Get move using thread
+                    threading.Thread(target=get_ai_move).start()
+                    # Wait for thread to conclude, can still generate tree while waiting
+                    while ai_thread_running:
+                        if test_button8.clicked():
+                            pygame.event.post(pygame.event.Event(vizualise))
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            elif event.type == vizualise:
+                                console3 = update_visual_tree(console)
+                    # Print metrics for last move
                     metrics = player2.get_performance_metrics()
                     console2 = f"AI 1:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
                     updateconsole(console2, 975, 280, 500, 200)
-
+                # Apply move
                 tictactoe = tictactoe.apply_move(move)
-
+            # Display final turn
             tictactoe.print_board()
             gameplay.draw_turn(DISPLAYSURF, tictactoe)
+            # Declare winner and switch to results screen
             if tictactoe.is_win("X"):
                 print(f"Player X (You) wins!")
                 console = f"Player X (You) wins!"
@@ -427,26 +506,18 @@ while True:
                 console = "It's a draw!"
             state = "results"
         
+        # Clear game board and return to title from blank state
         elif event.type == clear:
             buttonchanged = True
             tictactoe = clear_board(tictactoe)
+            decision_tree_root = None
             console2 = ""
             updateconsole(console2, 975, 30, 500, 800)
             state = "title"
 
+        # Vizualise Tree
         elif event.type == vizualise:
-            if decision_tree_root:
-                generate_decision_tree(decision_tree_root, max_nodes=100)
-                console = "Desicion Tree file created as\nvisualized_decision_tree.png\n\nShort preview generated."
-                baseimagetree = pygame.image.load(r"visualized_decision_tree.png").convert_alpha()
-                baseimagetree = pygame.transform.scale(baseimagetree, (400, 400))
-                console2 = ""
-                updateconsole(console2, 975, 30, 500, 800)
-                DISPLAYSURF.blit(baseimagetree, (980, 30))
-            else:
-                console = "No tree available."
-            updateconsole(console, 615, 300, 350, 300)
+            console = update_visual_tree(console)
 
     # Update Screen
     pygame.display.update()
-    
