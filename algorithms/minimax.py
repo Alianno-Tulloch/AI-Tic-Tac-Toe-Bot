@@ -2,6 +2,7 @@ import time
 import math
 from algorithms.node import Node
 
+# Alianno and Charlie
 class Minimax:
     def __init__(self, max_depth = 4):
         """
@@ -45,7 +46,8 @@ class Minimax:
         print(f"  Nodes evaluated: {Node.nodes_evaluated}")
         print(f"  Total nodes generated: {Node.total_nodes_generated}")
 
-        return best_move
+        # Returns the best move, and the root_node, so the graphing method can draw out the graph
+        return best_move, self.root_node
 
     def start_minimax(self, node, max_depth, maximizing):
         """

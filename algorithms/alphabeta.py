@@ -2,6 +2,7 @@ import time
 import math
 from algorithms.node import Node
 
+# Alianno and Ashvinan
 class AlphaBetaPruning:
     """
     Alpha-Beta Pruning algorithm using the Node-based tree structure.
@@ -48,7 +49,8 @@ class AlphaBetaPruning:
         print(f"  Total nodes generated: {Node.total_nodes_generated}")
         print(f"  Nodes pruned: {Node.nodes_pruned}")
 
-        return best_move
+        # Returns the best move, and the root_node, so the graphing method can draw out the graph
+        return best_move, self.root_node
 
     def alpha_beta(self, node, max_depth, alpha, beta, maximizing):
         """

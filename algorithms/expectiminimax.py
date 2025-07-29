@@ -55,7 +55,8 @@ class Expectiminimax:
         print(f"  Nodes evaluated: {Node.nodes_evaluated}")
         print(f"  Total nodes generated: {Node.total_nodes_generated}")
 
-        return best_move
+        # Returns the best move, and the root_node, so the graphing method can draw out the graph
+        return best_move, self.root_node
 
     def _expectiminimax(self, node, max_depth):
         """
