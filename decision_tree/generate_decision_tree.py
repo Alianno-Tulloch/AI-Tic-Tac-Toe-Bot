@@ -1,6 +1,6 @@
 from graphviz import Digraph
 
-def generate_decision_tree(root_node, filename = "decision_tree", max_nodes=1000):
+def generate_decision_tree(root_node, filename = "visualized_decision_tree", max_nodes=1000):
 
     dot = Digraph(comment="AI Decision Tree")
     dot.attr(rankdir="TB", splines="true", nodesep="0.5", ranksep="0.75")
