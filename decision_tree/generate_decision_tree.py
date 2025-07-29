@@ -1,9 +1,9 @@
 from graphviz import Digraph
 
-def generate_decision_tree(root_node, filename = "visualized_decision_tree", max_nodes=1000):
+def generate_decision_tree(root_node, filename = "visualized_decision_tree", max_nodes = 100):
 
-    dot = Digraph(comment="AI Decision Tree")
-    dot.attr(rankdir="TB", splines="true", nodesep="0.5", ranksep="0.75")
+    dot = Digraph(comment = "AI Decision Tree")
+    dot.attr(rankdir = "TB", splines = "true", nodesep = "0.5", ranksep = "0.75")
     visited = set()
 
     def add_node(node):
@@ -39,7 +39,7 @@ def generate_decision_tree(root_node, filename = "visualized_decision_tree", max
             style = "dashed"
             fillcolor = "gray80"
 
-        dot.node(node_id, label=label, shape=shape, style=style, color=color, fillcolor=fillcolor)
+        dot.node(node_id, label = label, shape = shape, style = style, color = color, fillcolor = fillcolor)
 
         for child in node.children:
             child_id = str(id(child))
@@ -47,4 +47,4 @@ def generate_decision_tree(root_node, filename = "visualized_decision_tree", max
             add_node(child)
 
     add_node(root_node)
-    dot.render(filename, format="png", cleanup=True)  # Generates decision_tree.png
+    dot.render(filename, format="png", cleanup = True)  # Generates decision_tree.png
