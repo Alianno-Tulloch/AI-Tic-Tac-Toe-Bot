@@ -7,7 +7,11 @@ from algorithms.minimax import Minimax
 from algorithms.alphabeta import AlphaBetaPruning
 from algorithms.expectiminimax import Expectiminimax
 from decision_tree.generate_decision_tree import generate_decision_tree
+from gemini_test import get_gemini_move
+from google import genai
+from dotenv import load_dotenv
 import sys
+import os
 import threading
 
 # Initialize pygame
@@ -34,8 +38,11 @@ text4 = font.render("Game Type", True, BLACK)
 text5 = font.render("AI 1 Strategy", True, BLACK)
 text6 = font.render("AI 2 Strategy", True, BLACK)
 text7 = font.render("Clear Board", True, BLACK)
-text8 = font.render("Visualize Desicion Tree", True, BLACK)
+text8 = font.render("Visualize Last turn's AI", True, BLACK)
+text9 = font.render("Desicion Tree (Not Gemini)", True, BLACK)
 console = "Pick an option.\n\nSize: 3\nGame Type: Regular\nAI 1 Strat: Minimax(8)\nAI 2 Strat: Minimax(8)"
+console2 = ""
+console3 = ""
 
 # Load sprites
 baseimagex = pygame.image.load(r"images\ticx.png").convert_alpha()
@@ -59,7 +66,7 @@ test_button4 = Button(800, 70, 160, 30)
 test_button5 = Button(800, 110, 160, 30)
 test_button6 = Button(800, 150, 160, 30)
 test_button7 = Button(615, 150, 160, 30)
-test_button8 = Button(615, 190, 250, 30)
+test_button8 = Button(615, 190, 285, 60)
 
 # Initialize Game Settings and Player Variables
 boardsize = 3
@@ -75,13 +82,22 @@ ai1_strat = "Minimax"
 ai2_strat = "Minimax"
 decision_tree_root = None
 
+# Set up Gemini Client
+def setup_gemini_client():
+    load_dotenv()
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY environment variable not set.")
+    return genai.Client(api_key=api_key)
+gem_client = setup_gemini_client()
+
 # Draw Tic Tac Toe board layout
 pygame.draw.rect(DISPLAYSURF, BLACK, pygame.Rect(30, 30, 570, 550), 2)
 
 # To draw buttons & button text
 def updatebuttons(buttonchanged):
     if buttonchanged:
-        pygame.draw.rect(DISPLAYSURF, WHITE, pygame.Rect(610, 25, 355, 210))
+        pygame.draw.rect(DISPLAYSURF, WHITE, pygame.Rect(610, 25, 355, 250))
         if state == "title":
             test_button1.draw(DISPLAYSURF, BLACK)
             test_button2.draw(DISPLAYSURF, BLACK)
@@ -101,6 +117,7 @@ def updatebuttons(buttonchanged):
         if state != "title":
             test_button8.draw(DISPLAYSURF, BLACK)
             DISPLAYSURF.blit(text8, (625, 191))
+            DISPLAYSURF.blit(text9, (625, 221))
         buttonchanged = False
     return buttonchanged
 
@@ -137,6 +154,8 @@ def update_strategy(player, strat, depth_limit):
         player = AlphaBetaPruning(max_depth=depth_limit)
     elif strat == "ExpectMM":
         player = Expectiminimax(max_depth=depth_limit, random_round_interval=rdm_event)
+    elif strat == "Gemini":
+        player = "Gemini"
     else:
         player = "Human"
     return player
@@ -176,12 +195,56 @@ def get_human_move(game, console):
 
 # To get ai move (threaded so ui doesn't wait)
 def get_ai_move():
-    global move, decision_tree_root, ai_thread_running
+    global move, decision_tree_root, ai_thread_running, console2
     ai_thread_running = True
     if tictactoe.active_player == "X":
-        move, decision_tree_root = player1.choose_move(tictactoe)
+        if player1 == "Gemini":
+            invalid_moves = set()
+            while True:
+                    # Format invalid moves for prompt
+                    invalid_moves_str = ', '.join([f"({move[0]},{move[1]})" for move in invalid_moves if isinstance(move, tuple) and len(move) == 2]) if invalid_moves else "None"
+                    response = get_gemini_move(gem_client, "X", boardsize, tictactoe.board, invalid_moves_str)
+                    try:
+                        move = tuple(map(int, response.strip().split(",")))
+                        if move in tictactoe.get_available_moves():
+                            console2 = f"Gemini AI response: {move}"
+                            updateconsole(console2, 975, 30, 500, 200)
+                            break
+                        else:
+                            if move in invalid_moves:
+                                console2 = f"Gemini keeps suggesting the same invalid move {move}.\nRetrying..."
+                            else:
+                                console2 = f"Gemini suggested invalid move {move}.\nRetrying..."
+                            invalid_moves.add(move)
+                    except Exception:
+                        console2 = f"Gemini response '{response}' could not be parsed.\nRetrying..."
+                    updateconsole(console2, 975, 30, 500, 200)
+        else:
+            move, decision_tree_root = player1.choose_move(tictactoe)
     elif tictactoe.active_player == "O":
-        move, decision_tree_root = player2.choose_move(tictactoe)
+        if player2 == "Gemini":
+            invalid_moves = set()
+            while True:
+                    # Format invalid moves for prompt
+                    invalid_moves_str = ', '.join([f"({move[0]},{move[1]})" for move in invalid_moves if isinstance(move, tuple) and len(move) == 2]) if invalid_moves else "None"
+                    response = get_gemini_move(gem_client, "O", boardsize, tictactoe.board, invalid_moves_str)
+                    try:
+                        move = tuple(map(int, response.strip().split(",")))
+                        if move in tictactoe.get_available_moves():
+                            console2 = f"Gemini AI response: {move}"
+                            updateconsole(console2, 975, 280, 500, 200)
+                            break
+                        else:
+                            if move in invalid_moves:
+                                console2 = f"Gemini keeps suggesting the same invalid move {move}.\nRetrying..."
+                            else:
+                                console2 = f"Gemini suggested invalid move {move}.\nRetrying..."
+                            invalid_moves.add(move)
+                    except Exception:
+                        console2 = f"Gemini response '{response}' could not be parsed.\nRetrying..."
+                    updateconsole(console2, 975, 280, 500, 200)
+        else:
+            move, decision_tree_root = player2.choose_move(tictactoe)
     ai_thread_running = False
 
 # Main Loop
@@ -193,10 +256,18 @@ while True:
 
     # Default console text in Title Screen
     if state == "title":
-        if game_type == "Random":
-            console = console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nRandom Event Interval: {rdm_event}\nAI 1 Strat: {ai1_strat}({depth_limit1})\nAI 2 Strat: {ai2_strat}({depth_limit2})"
+        if ai1_strat == "Gemini":
+            label1 = f"{ai1_strat}"
         else:
-            console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {ai1_strat}({depth_limit1})\nAI 2 Strat: {ai2_strat}({depth_limit2})"
+            label1 = f"{ai1_strat}({depth_limit1})"
+        if ai2_strat == "Gemini":
+            label2 = f"{ai2_strat}"
+        else:
+            label2 = f"{ai2_strat}({depth_limit2})"
+        if game_type == "Random":
+            console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nRandom Event Interval: {rdm_event}\nAI 1 Strat: {label1}\nAI 2 Strat: {label2}"
+        else:
+            console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {label1}\nAI 2 Strat: {label2}"
     
     # Check if any menu buttons have been clicked and post event
     if state == "title":
@@ -294,9 +365,9 @@ while True:
             # Changing AI 1's strategy
             elif state == "strategy1":
                 if game_type == "Random":
-                    console = "Type one of the options for AI 1:\n1 - Minimax\n2 - Alpha Beta Pruning\n3 - Expectiminimax"
+                    console = "Type one of the options for AI 1:\n1 - Minimax\n2 - Alpha Beta Pruning\n3 - Expectiminimax\n4 - Gemini"
                 else:
-                    console = "Type one of the options for AI 1:\n1 - Minimax\n2 - Alpha Beta Pruning\n\nExpectiminimax is \nRANDOM GAME ONLY"
+                    console = "Type one of the options for AI 1:\n1 - Minimax\n2 - Alpha Beta Pruning\n4 - Gemini\nExpectiminimax is \nRANDOM GAME ONLY"
                 updateconsole(console, 615, 300, 350, 300)
                 # Wait for valid user input
                 while state == "strategy1":
@@ -306,36 +377,41 @@ while True:
                             sys.exit()
                         elif event.type == pygame.KEYDOWN:
                             temp = chr(event.key)
-                    if temp == "1" or temp == "2":
+                    if temp == "1" or temp == "2" or temp == "4":
                         if temp == "1":
                             ai1_strat = "Minimax"
+                            state = 'pick'
                         elif temp == "2":
                             ai1_strat = "ABPruning"
-                        state = 'pick'
+                            state = 'pick'
+                        elif temp == "4":
+                            ai1_strat = "Gemini"
+                            state = 'title'
                     elif temp == "3" and game_type == "Random":
                         ai1_strat = "ExpectMM"
                         state = 'pick'
                 # Change depth limit
-                console = "Type depth limit for AI 1 (1-9):"
-                updateconsole(console, 615, 300, 350, 300)
-                temp = ""
-                while state == "pick":
-                    for event in pygame.event.get():
-                        if event.type == QUIT:
-                            pygame.quit()
-                            sys.exit()
-                        elif event.type == pygame.KEYDOWN:
-                            temp = chr(event.key)
-                    if temp.isdigit() and temp != "0":
-                        depth_limit1 = int(temp)
-                        state = 'title'
+                if ai1_strat != "Gemini":
+                    console = "Type depth limit for AI 1 (1-9):"
+                    updateconsole(console, 615, 300, 350, 300)
+                    temp = ""
+                    while state == "pick":
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            elif event.type == pygame.KEYDOWN:
+                                temp = chr(event.key)
+                        if temp.isdigit() and temp != "0":
+                            depth_limit1 = int(temp)
+                            state = 'title'
 
             # Changing AI 2's strategy
             elif state == "strategy2":
                 if game_type == "Random":
-                    console = "Type one of the options for AI 2:\n1 - Minimax\n2 - Alpha Beta Pruning\n3 - Expectiminimax"
+                    console = "Type one of the options for AI 2:\n1 - Minimax\n2 - Alpha Beta Pruning\n3 - Expectiminimax\n4 - Gemini"
                 else:
-                    console = "Type one of the options for AI 2:\n1 - Minimax\n2 - Alpha Beta Pruning\n\nExpectiminimax is \nRANDOM GAME ONLY"
+                    console = "Type one of the options for AI 2:\n1 - Minimax\n2 - Alpha Beta Pruning\n4 - Gemini\nExpectiminimax is \nRANDOM GAME ONLY"
                 updateconsole(console, 615, 300, 350, 300)
                 # Wait for valid user input
                 while state == "strategy2":
@@ -345,29 +421,34 @@ while True:
                             sys.exit()
                         elif event.type == pygame.KEYDOWN:
                             temp = chr(event.key)
-                    if temp == "1" or temp == "2":
+                    if temp == "1" or temp == "2" or temp == "4":
                         if temp == "1":
                             ai2_strat = "Minimax"
+                            state = 'pick'
                         elif temp == "2":
                             ai2_strat = "ABPruning"
-                        state = 'pick'
+                            state = 'pick'
+                        elif temp == "4":
+                            ai2_strat = "Gemini"
+                            state = 'title'
                     elif temp == "3" and game_type == "Random":
                         ai2_strat = "ExpectMM"
                         state = 'pick'
                 # Change depth limit
-                console = "Type depth limit for AI 2 (1-9):"
-                updateconsole(console, 615, 300, 350, 300)
-                temp = ""
-                while state == "pick":
-                    for event in pygame.event.get():
-                        if event.type == QUIT:
-                            pygame.quit()
-                            sys.exit()
-                        elif event.type == pygame.KEYDOWN:
-                            temp = chr(event.key)
-                    if temp.isdigit() and temp != "0":
-                        depth_limit2 = int(temp)
-                        state = 'title'
+                if ai1_strat != "Gemini":
+                    console = "Type depth limit for AI 2 (1-9):"
+                    updateconsole(console, 615, 300, 350, 300)
+                    temp = ""
+                    while state == "pick":
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            elif event.type == pygame.KEYDOWN:
+                                temp = chr(event.key)
+                        if temp.isdigit() and temp != "0":
+                            depth_limit2 = int(temp)
+                            state = 'title'
 
         # Start an AI vs AI Match
         elif event.type == ai_vs_ai:
@@ -406,9 +487,10 @@ while True:
                             elif event.type == vizualise:
                                 console3 = update_visual_tree(console)
                     # Print metrics for last move
-                    metrics = player1.get_performance_metrics()
-                    console2 = f"Player X:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time (s): {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
-                    updateconsole(console2, 975, 30, 500, 200)
+                    if player1 != "Gemini":
+                        metrics = player1.get_performance_metrics()
+                        console2 = f"Player X:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time (s): {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
+                        updateconsole(console2, 975, 30, 500, 200)
                 # Player 2
                 elif tictactoe.active_player == "O" and ai_thread_running == False:
                     print(f"Player O turn:\n{ai2_strat} AI is thinking...\n")
@@ -427,9 +509,10 @@ while True:
                             elif event.type == vizualise:
                                 console3 = update_visual_tree(console)
                     # Print metrics for last move
-                    metrics = player2.get_performance_metrics()
-                    console2 = f"Player O:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
-                    updateconsole(console2, 975, 280, 500, 200)
+                    if player2 != "Gemini":
+                        metrics = player2.get_performance_metrics()
+                        console2 = f"Player O:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
+                        updateconsole(console2, 975, 280, 500, 200)
                 # Apply move
                 tictactoe = tictactoe.apply_move(move)
             # Display final turn
@@ -486,9 +569,10 @@ while True:
                             elif event.type == vizualise:
                                 console3 = update_visual_tree(console)
                     # Print metrics for last move
-                    metrics = player2.get_performance_metrics()
-                    console2 = f"AI 1:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
-                    updateconsole(console2, 975, 280, 500, 200)
+                    if player2 != "Gemini":
+                        metrics = player2.get_performance_metrics()
+                        console2 = f"AI 1:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
+                        updateconsole(console2, 975, 280, 500, 200)
                 # Apply move
                 tictactoe = tictactoe.apply_move(move)
             # Display final turn
