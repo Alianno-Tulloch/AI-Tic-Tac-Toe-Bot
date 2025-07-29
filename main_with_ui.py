@@ -6,8 +6,8 @@ from game.random_game import RandomGame
 from algorithms.minimax import Minimax
 from algorithms.alphabeta import AlphaBetaPruning
 from algorithms.expectiminimax import Expectiminimax
+from decision_tree.generate_decision_tree import generate_decision_tree
 import sys
-import time
 
 # Initialize pygame
 pygame.init()
@@ -19,7 +19,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
 # Display Settings
-DISPLAYSURF = pygame.display.set_mode((1000,600))
+DISPLAYSURF = pygame.display.set_mode((1400,600))
 DISPLAYSURF.fill(WHITE)
 FPS = pygame.time.Clock()
 FPS.tick(30)
@@ -32,7 +32,9 @@ text3 = font.render("Board Size", True, BLACK)
 text4 = font.render("Game Type", True, BLACK)
 text5 = font.render("AI 1 Strategy", True, BLACK)
 text6 = font.render("AI 2 Strategy", True, BLACK)
-console = "Pick an option.\n\nSize: 3\nGame Type: Regular\nAI 1 Strat: Minimax\nAI 2 Strat: Minimax"
+text7 = font.render("Clear Board", True, BLACK)
+text8 = font.render("Visualize Desicion Tree", True, BLACK)
+console = "Pick an option.\n\nSize: 3\nGame Type: Regular\nAI 1 Strat: Minimax(8)\nAI 2 Strat: Minimax(8)"
 
 # Load sprites
 baseimagex = pygame.image.load(r"images\ticx.png").convert_alpha()
@@ -42,58 +44,81 @@ baseimageo = pygame.image.load(r"images\tico.png").convert_alpha()
 keyboardinput = pygame.USEREVENT + 0
 player_vs_ai = pygame.USEREVENT + 1
 ai_vs_ai = pygame.USEREVENT + 2
+clear = pygame.USEREVENT + 3
+vizualise = pygame.USEREVENT + 4
 state = "title"
+buttonchanged = True
 
 # Create Button instances
-test_button1 = Button(620, 30, 180, 30)
-test_button2 = Button(620, 70, 180, 30)
-test_button3 = Button(620, 110, 180, 30)
-test_button4 = Button(620, 150, 180, 30)
-test_button5 = Button(620, 190, 180, 30)
-test_button6 = Button(620, 230, 180, 30)
+test_button1 = Button(615, 30, 160, 30)
+test_button2 = Button(615, 70, 160, 30)
+test_button3 = Button(800, 30, 160, 30)
+test_button4 = Button(800, 70, 160, 30)
+test_button5 = Button(800, 110, 160, 30)
+test_button6 = Button(800, 150, 160, 30)
+test_button7 = Button(615, 150, 160, 30)
+test_button8 = Button(615, 110, 250, 30)
 
 # Initialize Game Settings and Player Variables
 boardsize = 3
 gameplay = TicTac_Layout(30, 30, 500, baseimagex, baseimageo)
 tictactoe = Game(board_size = boardsize)
 game_type = "Regular"
-player1 = Minimax(max_depth=8)
-player2 = Minimax(max_depth=8)
+depth_limit1 = 8
+depth_limit2 = 8
+rdm_event = 6
+player1 = Minimax(max_depth=depth_limit1)
+player2 = Minimax(max_depth=depth_limit2)
 ai1_strat = "Minimax"
 ai2_strat = "Minimax"
+decision_tree_root = None
 
-# Draw buttons, button text and tictactoe outline
-test_button1.draw(DISPLAYSURF, BLACK)
-test_button2.draw(DISPLAYSURF, BLACK)
-test_button3.draw(DISPLAYSURF, BLACK)
-test_button4.draw(DISPLAYSURF, BLACK)
-test_button5.draw(DISPLAYSURF, BLACK)
-test_button6.draw(DISPLAYSURF, BLACK)
-DISPLAYSURF.blit(text1, (635, 31))
-DISPLAYSURF.blit(text2, (635, 71))
-DISPLAYSURF.blit(text3, (635, 111))
-DISPLAYSURF.blit(text4, (635, 151))
-DISPLAYSURF.blit(text5, (635, 191))
-DISPLAYSURF.blit(text6, (635, 231))
+# Draw Tic Tac Toe board layout
 pygame.draw.rect(DISPLAYSURF, BLACK, pygame.Rect(30, 30, 570, 550), 2)
 
+# Draw buttons, button text
+def updatebuttons(buttonchanged):
+    if buttonchanged:
+        pygame.draw.rect(DISPLAYSURF, WHITE, pygame.Rect(610, 25, 355, 180))
+        if state == "title":
+            test_button1.draw(DISPLAYSURF, BLACK)
+            test_button2.draw(DISPLAYSURF, BLACK)
+            test_button3.draw(DISPLAYSURF, BLACK)
+            test_button4.draw(DISPLAYSURF, BLACK)
+            test_button5.draw(DISPLAYSURF, BLACK)
+            test_button6.draw(DISPLAYSURF, BLACK)
+            DISPLAYSURF.blit(text1, (625, 31))
+            DISPLAYSURF.blit(text2, (625, 71))
+            DISPLAYSURF.blit(text3, (810, 31))
+            DISPLAYSURF.blit(text4, (810, 71))
+            DISPLAYSURF.blit(text5, (810, 111))
+            DISPLAYSURF.blit(text6, (810, 151))
+        elif state == "results":
+            test_button7.draw(DISPLAYSURF, BLACK)
+            test_button8.draw(DISPLAYSURF, BLACK)
+            DISPLAYSURF.blit(text7, (625, 151))
+            DISPLAYSURF.blit(text8, (625, 111))
+        buttonchanged = False
+    return buttonchanged
+
 # To update text on screen
-def updateconsole(console):
-    pygame.draw.rect(DISPLAYSURF, WHITE, pygame.Rect(615, 300, 400, 400))
-    i = 300
+def updateconsole(console, x, y, w, h):
+    pygame.draw.rect(DISPLAYSURF, WHITE, pygame.Rect(x, y, w, h))
+    # pygame.draw.rect(DISPLAYSURF, BLACK, pygame.Rect(x, y, w, h), 2) # -> to see "console" outlines
+    i = y
     for line in console.splitlines():
-        DISPLAYSURF.blit(font.render(line, True, BLACK), (615, i))
+        DISPLAYSURF.blit(font.render(line, True, BLACK), (x, i))
         i += 30
     pygame.display.update()
 
 # To update an (AI) player's strategy
-def update_strategy(player, strat):
+def update_strategy(player, strat, depth_limit):
     if strat == "Minimax":
-        player = Minimax(max_depth=8)
+        player = Minimax(max_depth=depth_limit)
     elif strat == "ABPruning":
-        player = AlphaBetaPruning(max_depth=8)
+        player = AlphaBetaPruning(max_depth=depth_limit)
     elif strat == "ExpectMM":
-        player = Expectiminimax(max_depth=6, random_round_interval=6)
+        player = Expectiminimax(max_depth=depth_limit, random_round_interval=rdm_event)
     else:
         player = "Human"
     return player
@@ -101,7 +126,7 @@ def update_strategy(player, strat):
 # To clear game board
 def clear_board(type):
     if type == "Random":
-        game = RandomGame(board_size=boardsize, random_round_interval=6)
+        game = RandomGame(board_size=boardsize, random_round_interval=rdm_event)
     else:
         game = Game(board_size=boardsize)
     return game
@@ -121,31 +146,44 @@ def get_human_move(game, console):
                     return (row, col)
                 else:
                     console2 = "That spot is taken or invalid.\nTry again"
-        updateconsole(console + console2)        
+        updateconsole(console + console2, 615, 300, 350, 300)        
 
 # Main Loop
 while True:
-    # Draw console and tic tac toe board
-    updateconsole(console)
+    # Draw console, and tic tac toe board
+    buttonchanged = updatebuttons(buttonchanged)
+    updateconsole(console, 615, 300, 350, 300)
     gameplay.draw_turn(DISPLAYSURF, tictactoe)
+
+    if state == "title":
+        if game_type == "Random":
+            console = console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nRandom Event Interval: {rdm_event}\nAI 1 Strat: {ai1_strat}({depth_limit1})\nAI 2 Strat: {ai2_strat}({depth_limit2})"
+        else:
+            console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {ai1_strat}({depth_limit1})\nAI 2 Strat: {ai2_strat}({depth_limit2})"
     
     # Check if any menu buttons have been clicked
-    if test_button1.clicked():
-        pygame.event.post(pygame.event.Event(ai_vs_ai))
-    if test_button2.clicked():
-        pygame.event.post(pygame.event.Event(player_vs_ai))
-    if test_button3.clicked():
-        pygame.event.post(pygame.event.Event(keyboardinput))
-        state = 'changesize'
-    if test_button4.clicked():
-        pygame.event.post(pygame.event.Event(keyboardinput))
-        state = 'changegame'
-    if test_button5.clicked():
-        pygame.event.post(pygame.event.Event(keyboardinput))
-        state = 'strategy1'
-    if test_button6.clicked():
-        pygame.event.post(pygame.event.Event(keyboardinput))
-        state = 'strategy2'
+    if state == "title":
+        if test_button1.clicked():
+            pygame.event.post(pygame.event.Event(ai_vs_ai))
+        if test_button2.clicked():
+            pygame.event.post(pygame.event.Event(player_vs_ai))
+        if test_button3.clicked():
+            pygame.event.post(pygame.event.Event(keyboardinput))
+            state = 'changesize'
+        if test_button4.clicked():
+            pygame.event.post(pygame.event.Event(keyboardinput))
+            state = 'changegame'
+        if test_button5.clicked():
+            pygame.event.post(pygame.event.Event(keyboardinput))
+            state = 'strategy1'
+        if test_button6.clicked():
+            pygame.event.post(pygame.event.Event(keyboardinput))
+            state = 'strategy2'
+    if state == "results":
+        if test_button7.clicked():
+            pygame.event.post(pygame.event.Event(clear))
+        if test_button8.clicked():
+            pygame.event.post(pygame.event.Event(vizualise))
 
     # Events
     for event in pygame.event.get():
@@ -160,8 +198,8 @@ while True:
 
             # Changing size of board
             if state == "changesize":
-                console = "Type a number between 2-9"
-                updateconsole(console)
+                console = "Type a number between 2-9:"
+                updateconsole(console, 615, 300, 350, 300)
                 # Wait for valid user input
                 while state == "changesize":
                     for event in pygame.event.get():
@@ -175,12 +213,11 @@ while True:
                 # Update board
                 boardsize = int(temp)
                 tictactoe = Game(board_size = boardsize)
-                console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {ai1_strat}\nAI 2 Strat: {ai2_strat}"
 
-            # Changing size of board
+            # Change Game
             elif state == "changegame":
-                console = "Type a valid option:\n\n1 - Regular Game\n2 - Random Game"
-                updateconsole(console)
+                console = "Type a valid option:\n\n1 - Regular Game\n (Regular Tic-Tac-Toe)\n2 - Random Game\n (Every n turns, an occupied\n square randomly gets deleted)"
+                updateconsole(console, 615, 300, 350, 300)
                 # Wait for valid user input
                 while state == "changegame":
                     for event in pygame.event.get():
@@ -200,7 +237,20 @@ while True:
                         ai2_strat = "Minimax"
                 elif temp == "2":
                     game_type = "Random"
-                console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {ai1_strat}\nAI 2 Strat: {ai2_strat}"
+                    state = "pick"
+                    console = "Type random event interval (1-9):"
+                    updateconsole(console, 615, 300, 350, 300)
+                    temp = ""
+                    while state == "pick":
+                        for event in pygame.event.get():
+                            if event.type == QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            elif event.type == pygame.KEYDOWN:
+                                temp = chr(event.key)
+                        if temp.isdigit() and temp != "0":
+                            rdm_event = int(temp)
+                            state = 'title'
 
             # Changing AI 1's strategy
             elif state == "strategy1":
@@ -208,7 +258,7 @@ while True:
                     console = "Type one of the options for AI 1:\n1 - Minimax\n2 - Alpha Beta Pruning\n3 - Expectiminimax"
                 else:
                     console = "Type one of the options for AI 1:\n1 - Minimax\n2 - Alpha Beta Pruning\n\nExpectiminimax is \nRANDOM GAME ONLY"
-                updateconsole(console)
+                updateconsole(console, 615, 300, 350, 300)
                 # Wait for valid user input
                 while state == "strategy1":
                     for event in pygame.event.get():
@@ -222,12 +272,24 @@ while True:
                             ai1_strat = "Minimax"
                         elif temp == "2":
                             ai1_strat = "ABPruning"
-                        state = 'title'
+                        state = 'pick'
                     elif temp == "3" and game_type == "Random":
                         ai1_strat = "ExpectMM"
+                        state = 'pick'
+                # Change depth limit
+                console = "Type depth limit for AI 1 (1-9):"
+                updateconsole(console, 615, 300, 350, 300)
+                temp = ""
+                while state == "pick":
+                    for event in pygame.event.get():
+                        if event.type == QUIT:
+                            pygame.quit()
+                            sys.exit()
+                        elif event.type == pygame.KEYDOWN:
+                            temp = chr(event.key)
+                    if temp.isdigit() and temp != "0":
+                        depth_limit1 = int(temp)
                         state = 'title'
-                # Update board
-                console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {ai1_strat}\nAI 2 Strat: {ai2_strat}"
 
             # Changing AI 2's strategy
             elif state == "strategy2":
@@ -235,7 +297,7 @@ while True:
                     console = "Type one of the options for AI 2:\n1 - Minimax\n2 - Alpha Beta Pruning\n3 - Expectiminimax"
                 else:
                     console = "Type one of the options for AI 2:\n1 - Minimax\n2 - Alpha Beta Pruning\n\nExpectiminimax is \nRANDOM GAME ONLY"
-                updateconsole(console)
+                updateconsole(console, 615, 300, 350, 300)
                 # Wait for valid user input
                 while state == "strategy2":
                     for event in pygame.event.get():
@@ -249,19 +311,34 @@ while True:
                             ai2_strat = "Minimax"
                         elif temp == "2":
                             ai2_strat = "ABPruning"
-                        state = 'title'
+                        state = 'pick'
                     elif temp == "3" and game_type == "Random":
                         ai2_strat = "ExpectMM"
+                        state = 'pick'
+                # Change depth limit
+                console = "Type depth limit for AI 2 (1-9):"
+                updateconsole(console, 615, 300, 350, 300)
+                temp = ""
+                while state == "pick":
+                    for event in pygame.event.get():
+                        if event.type == QUIT:
+                            pygame.quit()
+                            sys.exit()
+                        elif event.type == pygame.KEYDOWN:
+                            temp = chr(event.key)
+                    if temp.isdigit() and temp != "0":
+                        depth_limit2 = int(temp)
                         state = 'title'
-                # Update board
-                console = f"Pick an option.\n\nSize: {boardsize}\nGame Type: {game_type}\nAI 1 Strat: {ai1_strat}\nAI 2 Strat: {ai2_strat}"
 
         # Start an AI vs AI Match
         elif event.type == ai_vs_ai:
+            state = "aivsai"
+            buttonchanged = True
+            updatebuttons(buttonchanged)
             # Update game settings and start game
             tictactoe = clear_board(game_type)
-            player1 = update_strategy(player1, ai1_strat)
-            player2 = update_strategy(player2, ai2_strat)
+            player1 = update_strategy(player1, ai1_strat, depth_limit1)
+            player2 = update_strategy(player2, ai2_strat, depth_limit2)
             print("-"*30)
             print("\nNEW AI VS AI GAME:\n")
 
@@ -275,21 +352,21 @@ while True:
                 if tictactoe.active_player == "X":
                     print(f"Player X turn:\n{ai1_strat} AI is thinking...\n")
                     console += f"Player X turn:\n{ai1_strat} AI is thinking..."
-                    updateconsole(console)
-                    start_time = time.time()
+                    updateconsole(console, 615, 300, 350, 300)
                     move, decision_tree_root = player1.choose_move(tictactoe)
-                    end_time = time.time()
+                    metrics = player1.get_performance_metrics()
+                    console2 = f"Player X:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time (s): {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
+                    updateconsole(console2, 975, 30, 500, 200)
                 # Player 2
                 elif tictactoe.active_player == "O":
                     print(f"Player O turn:\n{ai2_strat} AI is thinking...\n")
                     console += f"Player O turn:\n{ai2_strat} AI is thinking..."
-                    updateconsole(console)
-                    start_time = time.time()
+                    updateconsole(console, 615, 300, 350, 300)
                     move, decision_tree_root = player2.choose_move(tictactoe)
-                    end_time = time.time()
+                    metrics = player2.get_performance_metrics()
+                    console2 = f"Player O:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
+                    updateconsole(console2, 975, 280, 500, 200)
 
-                #execution_time = end_time - start_time
-                #print(f"Execution time: {execution_time:.12f} seconds")
                 tictactoe = tictactoe.apply_move(move)
             tictactoe.print_board()
             gameplay.draw_turn(DISPLAYSURF, tictactoe)
@@ -306,9 +383,12 @@ while True:
 
         # Start a Player VS AI Match
         elif event.type == player_vs_ai:
+            state = "playervsai"
+            buttonchanged = True
+            updatebuttons(buttonchanged)
             # Update game settings and start game
             tictactoe = clear_board(game_type)
-            player2 = update_strategy(player2, ai1_strat)
+            player2 = update_strategy(player2, ai1_strat, depth_limit1)
             print("-"*30)
             print("\nNEW PLAYER VS AI GAME:\n")
 
@@ -326,11 +406,11 @@ while True:
                 elif tictactoe.active_player == "O":
                     print(f"AI 1's turn:\n{ai1_strat} AI is thinking...")
                     console += f"AI 1's turn:\n{ai1_strat} AI is thinking..."
-                    updateconsole(console)
-                    start_time = time.time()
+                    updateconsole(console, 615, 300, 350, 300)
                     move, decision_tree_root = player2.choose_move(tictactoe)
-                    end_time = time.time()
-                    #execution_time = end_time - start_time
+                    metrics = player2.get_performance_metrics()
+                    console2 = f"AI 1:\nAlgorithm: {metrics['algorithm']}\nMax Depth: {metrics["max_depth"]}\nExecution Time: {metrics["execution_time"]:.12f}\nNodes Evaluated: {metrics["nodes_evaluated"]}\nTotal Nodes Generated: {metrics["total_nodes_generated"]}"
+                    updateconsole(console2, 975, 280, 500, 200)
 
                 tictactoe = tictactoe.apply_move(move)
 
@@ -346,6 +426,27 @@ while True:
                 print("It's a draw!")
                 console = "It's a draw!"
             state = "results"
+        
+        elif event.type == clear:
+            buttonchanged = True
+            tictactoe = clear_board(tictactoe)
+            console2 = ""
+            updateconsole(console2, 975, 30, 500, 800)
+            state = "title"
+
+        elif event.type == vizualise:
+            if decision_tree_root:
+                generate_decision_tree(decision_tree_root, max_nodes=100)
+                console = "Desicion Tree file created as\nvisualized_decision_tree.png\n\nShort preview generated."
+                baseimagetree = pygame.image.load(r"visualized_decision_tree.png").convert_alpha()
+                baseimagetree = pygame.transform.scale(baseimagetree, (400, 400))
+                console2 = ""
+                updateconsole(console2, 975, 30, 500, 800)
+                DISPLAYSURF.blit(baseimagetree, (980, 30))
+            else:
+                console = "No tree available."
+            updateconsole(console, 615, 300, 350, 300)
 
     # Update Screen
     pygame.display.update()
+    
