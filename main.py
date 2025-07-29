@@ -4,7 +4,7 @@ from algorithms.minimax import Minimax
 from algorithms.alphabeta import AlphaBetaPruning
 from algorithms.expectiminimax import Expectiminimax
 import time
-from google import genai
+from google.generativeai import genai
 import os
 from gemini_test import get_gemini_move
 # from expectiminimax import Exepctiminimax
