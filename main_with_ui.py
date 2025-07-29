@@ -277,7 +277,7 @@ while True:
                     console += f"Player X turn:\n{ai1_strat} AI is thinking..."
                     updateconsole(console)
                     start_time = time.time()
-                    move = player1.choose_move(tictactoe)
+                    move, decision_tree_root = player1.choose_move(tictactoe)
                     end_time = time.time()
                 # Player 2
                 elif tictactoe.active_player == "O":
@@ -285,7 +285,7 @@ while True:
                     console += f"Player O turn:\n{ai2_strat} AI is thinking..."
                     updateconsole(console)
                     start_time = time.time()
-                    move = player2.choose_move(tictactoe)
+                    move, decision_tree_root = player2.choose_move(tictactoe)
                     end_time = time.time()
 
                 #execution_time = end_time - start_time
@@ -328,7 +328,7 @@ while True:
                     console += f"AI 1's turn:\n{ai1_strat} AI is thinking..."
                     updateconsole(console)
                     start_time = time.time()
-                    move = player2.choose_move(tictactoe)
+                    move, decision_tree_root = player2.choose_move(tictactoe)
                     end_time = time.time()
                     #execution_time = end_time - start_time
 
