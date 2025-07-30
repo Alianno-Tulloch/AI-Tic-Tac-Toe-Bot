@@ -1,4 +1,4 @@
-# Alianno and Ashvinan
+# Alianno and Charlie
 class Game:
     """
     board_size: The size of the game board, n x n. For example, 3x3, 5x5, 7x7
@@ -74,7 +74,7 @@ class Game:
         opponent = "O" if player == "X" else "X"
         score = 0
         n = self.board_size
-        b = self.board #saves board size nad boards itself into shorter names for easier use
+        b = self.board #saves board size and boards itself into shorter names for easier use
 
         def line_score(line): #line_score checks how many lines are open for the player 
             if opponent in line:

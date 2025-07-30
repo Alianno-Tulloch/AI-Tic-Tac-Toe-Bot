@@ -8,7 +8,6 @@ Charlie Carter - 169109646
 Juan Larrota Bernal - 169039970
 Ankit Gupta - 169087212
 
-
 # Description:
 
 This is our group's AI Tic Tac Toe Bot. 
@@ -17,7 +16,7 @@ This is our group's AI Tic Tac Toe Bot.
 
 This project uses:
 - Pygame for the UI
-- Google Gemini for (Gemini stuff)
+- Google Gemini
 - Graphviz for decision tree visualization.
 
 To download these dependencies, run these commands in your terminal:
@@ -25,7 +24,6 @@ pip install pygame
 pip install graphviz
 pip install python-dotenv
 pip install google-generativeai
-
 
 In addition, Graphviz also requires you to download the Graphviz software, and to add it to your system PATH
 

@@ -2,17 +2,20 @@ import time
 import math
 from algorithms.node import Node
 
-# Alianno and Charlie
+# Alianno and Ashvinan
 class AlphaBetaPruning:
     """
     Alpha-Beta Pruning algorithm using the Node-based tree structure.
     """
 
     def __init__(self, max_depth = 4):
-        self.max_depth = max_depth
-        self.root_node = None
-        self.execution_time = 0
-        self.performance_metrics = {}
+        """
+        Initialize the Alpha-Beta Pruning algorithm.
+        """
+        self.max_depth = max_depth # The max node depth that the algorithm is allowed to explore (default is 4)
+        self.root_node = None # The root node
+        self.execution_time = 0 # Execution time, in seconds
+        self.performance_metrics = {} # Holds performance metrics, such as execution_time, nodes_evaluated, total_nodes_generated
 
     def choose_move(self, game):
         """
@@ -62,12 +65,23 @@ class AlphaBetaPruning:
         if node.utility is not None:
             return node.utility
 
+        """
+        How alpha and beta work:
+            - Alpha represents the best (highest) value that the MAX player can guarantee so far.
+            - Beta represents the best (lowest) value that the MIN player can guarantee so far.
+            - Alpha starts at -infinity, Beta starts at +infinity.
+            - As the tree is explored:
+                - MAX nodes update alpha when they find higher values.
+                - MIN nodes update beta when they find lower values.
+            - If at any point beta <= alpha, we can prune (skip) the remaining branches:
+                - This is because the current node cannot influence the outcome—either MAX has a better option already, or MIN has a worse one.
+        """
         if maximizing:
             best_value = -math.inf
-            for child in node.children:
+            for child in node.children: # searches every child in the list
                 value = self.alpha_beta(child, max_depth, alpha, beta, maximizing = False)
                 best_value = max(best_value, value)
-                alpha = max(alpha, best_value)
+                alpha = max(alpha, best_value) # alpha = the larger number between the original alpha value, and the utility of the child
 
                 # Prune
                 if beta <= alpha:
@@ -95,6 +109,3 @@ class AlphaBetaPruning:
 
     def get_performance_metrics(self):
         return self.performance_metrics.copy()
-
-    def get_game_tree(self):
-        return self.root_node

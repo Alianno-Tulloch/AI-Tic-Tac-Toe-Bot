@@ -94,6 +94,3 @@ class Expectiminimax:
 
     def get_performance_metrics(self):
         return self.performance_metrics.copy()
-
-    def get_game_tree(self):
-        return self.root_node

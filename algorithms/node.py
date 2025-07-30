@@ -64,8 +64,6 @@ class Node:
         if self.game.is_over():
             return "TERMINAL"
         
-        """                                                                THIS SECTION IS RESERVED FOR CHOICE NODES"""
-        
         # Alternate between MAX and MIN based on depth
         return "MAX" if self.depth % 2 == 0 else "MIN"
     
@@ -130,10 +128,10 @@ class Node:
                 - Then store evaluate and set utility
             - If the node is a MAX or MIN node:
                 - adds one child to the list, per available move.
-
-        CHANCE NODE will be added later, but if it's a chance node, it will   
             - If the node is a CHANCE node:
-                - adds all outcomes with equal probabilities.
+                - Calculates the utility of the CHANCE node by adding:
+                    Utility of child node / (1/number of children), which is the chance of that node being deleted
+                For each child node
         """
         
         # Prevent duplicate expansion

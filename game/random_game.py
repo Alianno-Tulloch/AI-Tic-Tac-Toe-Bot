@@ -52,5 +52,3 @@ class RandomGame(Game):
         if occupied: # Randomly choose a square from the occupied list, and clears it
             r, c = random.choice(occupied)
             self.board[r][c] = " "
-
-    
