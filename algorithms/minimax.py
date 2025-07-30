@@ -18,7 +18,7 @@ class Minimax:
         Choose the best move using the Minimax algorithm and the Node tree.
         """
         # Reset counters
-        # Node.reset_counters()
+        Node.reset_counters()
         start_time = time.time()
 
         # Initialize root node

@@ -7,39 +7,31 @@ class Expectiminimax:
     def __init__(self, max_depth = 4, random_round_interval = 3):
         """
         Initialize the Expectiminimax algorithm.
-
-        Args:
-            max_depth (int): Maximum depth for tree exploration
-            random_round_interval (int): Number of plies before a random event occurs
         """
         self.max_depth = max_depth
-        self.random_round_interval = random_round_interval  # how often randomness happens (in plies)
+        self.random_round_interval = random_round_interval  # how often randomness happens: occurs every n turns
         self.root_node = None
         self.execution_time = 0
         self.performance_metrics = {}
 
     def choose_move(self, game):
         """
-        Choose the best move using Expectiminimax algorithm.
-
-        Args:
-            game: Current game state
-
-        Returns:
-            tuple: Best move
+        Choose the best move using Expectiminimax algorithm and the Node tree
         """
+        # Reset counters
         Node.reset_counters()
         start_time = time.time()
 
         # Initialize root node
         self.root_node = Node(game = game, depth = 0)
 
-        # Begin expectiminimax traversal
-        self._expectiminimax(self.root_node, self.max_depth)
+        # Compute utility from root using recursive expectiminimax
+        self.start_expectiminimax(self.root_node, self.max_depth)
 
+        # Get best move from root node
         best_move = self.root_node.get_best_move()
 
-        # Capture performance data
+        # Performance Info
         end_time = time.time()
         self.execution_time = end_time - start_time
         self.performance_metrics = {
@@ -59,26 +51,37 @@ class Expectiminimax:
         # Returns the best move, and the root_node, so the graphing method can draw out the graph
         return best_move, self.root_node
 
-    def _expectiminimax(self, node, max_depth):
+    def start_expectiminimax(self, node, max_depth):
         """
         Recursive Expectiminimax function
         """
         node.expand_children(max_depth, random_chance_interval = self.random_round_interval)
 
+        # If it's a terminal or depth-limited node, return its utility
         if node.utility is not None:
             return node.utility
-
+        
+        """
+        How MAX, MIN, and CHANCE nodes work in Expectiminimax:
+            - MAX nodes: Represent the AI's turn. The algorithm chooses the child with the highest utility value.
+            - MIN nodes: Represent the opponent's turn. The algorithm chooses the child with the lowest utility value.
+            - CHANCE nodes: Represent a random event (e.g., an occupied square being randomly deleted/cleared).
+                - Each child has an equal probability of occurring.
+                - The expected utility of a CHANCE node is calculated as the sum of:
+                    [(probability of child) * (utility of child)], for all child nodes
+                - This means the utility is a weighted average of all outcomes.
+        """
         if node.node_type == "MAX":
             best_value = -math.inf
             for child in node.children:
-                val = self._expectiminimax(child, max_depth)
+                val = self.start_expectiminimax(child, max_depth)
                 best_value = max(best_value, val)
             node.utility = best_value
 
         elif node.node_type == "MIN":
             best_value = math.inf
             for child in node.children:
-                val = self._expectiminimax(child, max_depth)
+                val = self.start_expectiminimax(child, max_depth)
                 best_value = min(best_value, val)
             node.utility = best_value
 
@@ -86,7 +89,7 @@ class Expectiminimax:
             # Expected utility over all random outcomes
             expected_utility = 0
             for child in node.children:
-                val = self._expectiminimax(child, max_depth)
+                val = self.start_expectiminimax(child, max_depth)
                 expected_utility += child.probability * val
             node.utility = expected_utility
 
