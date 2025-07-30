@@ -2,7 +2,7 @@ import time
 import math
 from algorithms.node import Node
 
-# Alianno and Ashvinan
+# Alianno and Charlie
 class AlphaBetaPruning:
     """
     Alpha-Beta Pruning algorithm using the Node-based tree structure.

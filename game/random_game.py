@@ -34,7 +34,7 @@ class RandomGame(Game):
             round_count=self.round_count + 1
         )
 
-        # Trigger random event if needed
+        # If round_count % random_round_interval = 0, then it triggers the randomly deleted square
         if new_game.round_count % new_game.random_round_interval == 0:
             new_game.randomly_clear_occupied_square()
 

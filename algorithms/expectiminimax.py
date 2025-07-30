@@ -2,6 +2,7 @@ import time
 import math
 from algorithms.node import Node
 
+# Alianno
 class Expectiminimax:
     def __init__(self, max_depth = 4, random_round_interval = 3):
         """

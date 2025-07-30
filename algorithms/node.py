@@ -204,6 +204,27 @@ class Node:
             self.children.append(child_node)
 
         self.is_expanded = True
+
+
+    def format_board(self):
+        """
+        Returns a string representation of the game board.
+        This is used when the node tree gets visualized.
+        Example:    X |   | O
+                    ---------
+                      | X |  
+                    ---------
+                    O |   | X
+        """
+        lines = []
+        size = self.game.board_size
+        for r in range(size):
+            row = " | ".join(self.game.board[r])
+            lines.append(row)
+            if r < size - 1:
+                lines.append("-" * (size * 4 - 3))  # Adjusts for spacing
+        return "\n".join(lines)
+
     
 
     # Resets all class performance metrics.
