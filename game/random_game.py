@@ -40,14 +40,16 @@ class RandomGame(Game):
 
         return new_game
 
-    def randomly_clear_occupied_square(self):
+    def randomly_clear_occupied_square(self): # Randomly deletes an occupied square from the gameboard.
+        # Creates a tuple of occupied squares
         occupied = [
             (r, c)
             for r in range(self.board_size)
             for c in range(self.board_size)
             if self.board[r][c] != " "
         ]
-        if occupied:
+
+        if occupied: # Randomly choose a square from the occupied list, and clears it
             r, c = random.choice(occupied)
             self.board[r][c] = " "
 
