@@ -10,7 +10,10 @@ Ankit Gupta - 169087212
 
 # Description:
 
-This is our group's AI Tic Tac Toe Bot. Note that creating a decision tree creates a png in the project folder named visualized_decision_tree.png
+This is our group's AI Tic Tac Toe Bot. 
+
+Note 1: add your own .env file with your own "GEMINI_API_KEY=" statement.
+Note 2: Creating a decision tree creates a png in the project folder named visualized_decision_tree.png
 
 # Dependencies:
 
@@ -23,7 +26,7 @@ To download these dependencies, run these commands in your terminal:
 pip install pygame
 pip install graphviz
 pip install python-dotenv
-pip install google-generativeai
+pip install google-genai
 
 In addition, Graphviz also requires you to download the Graphviz software, and to add it to your system PATH
 
