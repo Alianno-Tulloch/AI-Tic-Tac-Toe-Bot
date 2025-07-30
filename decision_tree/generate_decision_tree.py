@@ -3,7 +3,7 @@ from graphviz import Digraph
 # Alianno
 def generate_decision_tree(root_node, filename = "visualized_decision_tree", max_nodes = 100):
 
-    dot = Digraph(comment = "AI Decision Tree")
+    dot = Digraph(comment = "AI Decision Tree") # creates a directional graph
     dot.attr(rankdir = "TB", splines = "true", nodesep = "0.5", ranksep = "0.75")
     visited = set()
 
@@ -11,15 +11,16 @@ def generate_decision_tree(root_node, filename = "visualized_decision_tree", max
         if len(visited) > max_nodes:
             return
 
+        # adds visisted nodes to this list, so the function doesn't accidentally traverse/graph them multiple times
         node_id = str(id(node))
         visited.add(node_id)
 
-        # Build label with clear descriptors
-        label  = f"{node.node_type}\n"
-        label += f"Utility: {node.utility}\n"
-        label += f"Node Depth: {node.depth}\n"
-        label += f"{node.format_board()}\n"
-        if node.node_type == "CHANCE":
+        # The label for all the chance nodes
+        label  = f"{node.node_type}\n" # Node type
+        label += f"Utility: {node.utility}\n" # node utility
+        label += f"Node Depth: {node.depth}\n" # node depth
+        label += f"{node.format_board()}\n" # the game move that it represents
+        if node.node_type == "CHANCE": # display the probability of each of the chance node's children occuring (chance of each node getting deleted)
             chance = node.probability / len(node.children)
             label += f"Probability of each child: {chance:.3f}"
 

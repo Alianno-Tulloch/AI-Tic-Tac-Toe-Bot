@@ -10,7 +10,7 @@ Ankit Gupta - 169087212
 
 # Description:
 
-This is our group's AI Tic Tac Toe Bot. 
+This is our group's AI Tic Tac Toe Bot. Note that creating a decision tree creates a png in the project folder named visualized_decision_tree.png
 
 # Dependencies:
 
