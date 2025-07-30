@@ -4,7 +4,8 @@ from algorithms.minimax import Minimax
 from algorithms.alphabeta import AlphaBetaPruning
 from algorithms.expectiminimax import Expectiminimax
 import time
-from google.generativeai import genai
+from google import genai
+from dotenv import load_dotenv
 import os
 from gemini_test import get_gemini_move
 # from expectiminimax import Exepctiminimax
@@ -49,7 +50,7 @@ def main():
         game.print_board()
 
         if game.active_player == "X":
-           if game_mode == 0:
+            if game_mode == 0:
                 move = get_human_move(game)
             else:
                 invalid_moves = set()

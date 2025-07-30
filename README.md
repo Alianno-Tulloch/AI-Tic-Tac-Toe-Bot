@@ -15,6 +15,10 @@ This is our group's AI Tic Tac Toe Bot.
 Note 1: add your own .env file with your own "GEMINI_API_KEY=" statement.
 Note 2: Creating a decision tree creates a png in the project folder named visualized_decision_tree.png
 
+# HOW TO RUN
+
+Run main.py. This file displays the UI version. If you want to run the terminal/debug version instead, run main_debug.py.
+
 # Dependencies:
 
 This project uses:
