@@ -1,16 +1,7 @@
-# Multi-Agent-Algorithm-Project
-# CP468, Group 19, Project 1
-Group Members:
-Ashvinan Sivasambu - 169021867
-Alianno Tulloch - 169032861
-Jazib Zaidi- 169040270
-Charlie Carter - 169109646
-Juan Larrota Bernal - 169039970
-Ankit Gupta - 169087212
-
+# AI Tic Tac Toe Bot
 # Description:
 
-This is our group's AI Tic Tac Toe Bot. 
+This is our group's AI Tic Tac Toe Bot (Using Minimax/Alpha Beta Pruning/Expectiminimax). 
 
 Note 1: add your own .env file with your own "GEMINI_API_KEY=" statement.
 Note 2: Creating a decision tree creates a png in the project folder named visualized_decision_tree.png
